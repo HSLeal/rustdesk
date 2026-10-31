@@ -325,6 +325,41 @@ jobs:
         shell: bash
         run: echo "SODIUM_LIB_DIR=$VCPKG_ROOT/installed/${{ matrix.job.vcpkg-triplet }}/lib" >> "$GITHUB_ENV"
 
+      - name: Inject Custom Server Configuration from Secrets
+        shell: python
+        env:
+          RENDEZVOUS_SERVER: ${{ secrets.RENDEZVOUS_SERVER }}
+          RS_PUB_KEY: ${{ secrets.RS_PUB_KEY }}
+          API_SERVER: ${{ secrets.API_SERVER }}
+        run: |
+          import os
+
+          rendezvous = os.environ.get("RENDEZVOUS_SERVER", "").strip()
+          key = os.environ.get("RS_PUB_KEY", "").strip()
+          api = os.environ.get("API_SERVER", "").strip()
+
+          cfg_path = "libs/hbb_common/src/config.rs"
+          if os.path.exists(cfg_path):
+              with open(cfg_path, "r", encoding="utf-8") as f:
+                  cfg = f.read()
+              if rendezvous:
+                  cfg = cfg.replace("rs-ny.rustdesk.com", rendezvous)
+                  print(f"Configured Rendezvous Server: {rendezvous}")
+              if key:
+                  cfg = cfg.replace("OeVuKk5nlHiXp+APNn0Y3pC1Iwpwn44JGqrQCsWqmBw=", key)
+                  print("Configured Public Key")
+              with open(cfg_path, "w", encoding="utf-8") as f:
+                  f.write(cfg)
+
+          common_path = "src/common.rs"
+          if os.path.exists(common_path) and api:
+              with open(common_path, "r", encoding="utf-8") as f:
+                  common = f.read()
+              common = common.replace("https://admin.rustdesk.com", api)
+              print(f"Configured API Server: {api}")
+              with open(common_path, "w", encoding="utf-8") as f:
+                  f.write(common)
+
       - name: Build rustdesk
         run: |
           # Windows: build RustDesk
@@ -437,6 +472,13 @@ jobs:
           popd
           mkdir -p ./SignOutput
           mv ./target/release/rustdesk-portable-packer.exe ./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.exe
+
+      - name: Upload Suporte Grupo Etica Executable
+        if: env.UPLOAD_ARTIFACT == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: Suporte-Grupo-Etica-Windows-${{ matrix.job.arch }}
+          path: ./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.exe
 
       - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2
