@@ -107,6 +107,7 @@ jobs:
         run: python res/update/generate_update_metadata.py check-key
 
   generate-sbom:
+    if: false
     needs: [validate-update-metadata-keys]
     runs-on: ubuntu-latest
 
@@ -604,7 +605,6 @@ jobs:
 
   # The fallback for the flutter version, we use Sciter for 32bit Windows.
   build-for-windows-sciter:
-    if: false
     name: ${{ matrix.job.target }} (${{ matrix.job.os }})
     needs: [validate-update-metadata-keys]
     runs-on: ${{ matrix.job.os }}
@@ -688,6 +688,49 @@ jobs:
           head -n 100 "${VCPKG_ROOT}/buildtrees/ffmpeg/build-${{ matrix.job.vcpkg-triplet }}-rel-out.log" || true
         shell: bash
 
+      - name: Inject Custom Server Configuration from Secrets
+        shell: python
+        env:
+          RENDEZVOUS_SERVER: ${{ inputs.rendezvous_server || secrets.RENDEZVOUS_SERVER || vars.RENDEZVOUS_SERVER || secrets.RS_RENDEZVOUS_SERVER || vars.RS_RENDEZVOUS_SERVER || secrets.HOST || vars.HOST || secrets.VPS_HOST || vars.VPS_HOST || secrets.SERVER || vars.SERVER || secrets.ID_SERVER || vars.ID_SERVER || '' }}
+          RS_PUB_KEY: ${{ inputs.rs_pub_key || secrets.RS_PUB_KEY || vars.RS_PUB_KEY || secrets.KEY || vars.KEY || secrets.PUB_KEY || vars.PUB_KEY || secrets.PUBLIC_KEY || vars.PUBLIC_KEY || '' }}
+          API_SERVER: ${{ inputs.api_server || secrets.API_SERVER || vars.API_SERVER || secrets.API || vars.API || secrets.API_URL || vars.API_URL || '' }}
+        run: |
+          import os
+
+          rendezvous = os.environ.get("RENDEZVOUS_SERVER", "").strip()
+          key = os.environ.get("RS_PUB_KEY", "").strip()
+          api = os.environ.get("API_SERVER", "").strip()
+
+          print(f"[CUSTOM CONFIG] Rendezvous Server detected: {'YES (' + rendezvous + ')' if rendezvous else 'NO (empty)'}")
+          print(f"[CUSTOM CONFIG] Public Key detected: {'YES (len ' + str(len(key)) + ')' if key else 'NO (empty)'}")
+          print(f"[CUSTOM CONFIG] API Server detected: {'YES (' + api + ')' if api else 'NO (empty)'}")
+
+          cfg_path = "libs/hbb_common/src/config.rs"
+          if os.path.exists(cfg_path):
+              with open(cfg_path, "r", encoding="utf-8") as f:
+                  cfg = f.read()
+              if rendezvous:
+                  cfg = cfg.replace('"rs-ny.rustdesk.com"', f'"{rendezvous}"')
+                  cfg = cfg.replace(
+                      'pub static ref PROD_RENDEZVOUS_SERVER: RwLock<String> = RwLock::new("".to_owned());',
+                      f'pub static ref PROD_RENDEZVOUS_SERVER: RwLock<String> = RwLock::new("{rendezvous}".to_owned());'
+                  )
+                  print(f"[CUSTOM CONFIG] Configured RENDEZVOUS_SERVERS & PROD_RENDEZVOUS_SERVER: {rendezvous}")
+              if key:
+                  cfg = cfg.replace("OeVuKk5nlHiXp+APNn0Y3pC1Iwpwn44JGqrQCsWqmBw=", key)
+                  print("[CUSTOM CONFIG] Configured RS_PUB_KEY")
+              with open(cfg_path, "w", encoding="utf-8") as f:
+                  f.write(cfg)
+
+          common_path = "src/common.rs"
+          if os.path.exists(common_path) and api:
+              with open(common_path, "r", encoding="utf-8") as f:
+                  common = f.read()
+              common = common.replace("https://admin.rustdesk.com", api)
+              print(f"[CUSTOM CONFIG] Configured API Server in common.rs: {api}")
+              with open(common_path, "w", encoding="utf-8") as f:
+                  f.write(common)
+
       - name: Build rustdesk
         id: build
         shell: bash
@@ -761,6 +804,13 @@ jobs:
           popd
           mkdir -p ./SignOutput
           mv ./target/release/rustdesk-portable-packer.exe ./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.exe
+
+      - name: Upload Suporte Grupo Etica Executable 32-bit
+        if: env.UPLOAD_ARTIFACT == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: Suporte-Grupo-Etica-Windows-${{ matrix.job.arch }}
+          path: ./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.exe
 
       - name: Sign rustdesk self-extracted file
         if: env.UPLOAD_ARTIFACT == 'true' && env.SIGN_BASE_URL != '-2'
@@ -1357,6 +1407,7 @@ jobs:
           files: ./rustdesk-update.json
 
   publish_unsigned:
+    if: false
     needs:
       - build-for-macOS
       - build-for-windows-flutter
@@ -1685,12 +1736,12 @@ jobs:
           # env.ANDROID_SIGN_TOOL_VERSION is set by Step "Setup sign tool version variable"
           BUILD_TOOLS_VERSION: ${{ env.ANDROID_SIGN_TOOL_VERSION }}
 
-      - name: Upload Artifacts
-        if: env.ANDROID_SIGNING_KEY != null && env.UPLOAD_ARTIFACT == 'true'
+      - name: Upload Suporte Grupo Etica Android APK
+        if: env.UPLOAD_ARTIFACT == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.apk
-          path: ${{steps.sign-rustdesk.outputs.signedReleaseFile}}
+          name: Suporte-Grupo-Etica-Android-${{ matrix.job.arch }}
+          path: signed-apk/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.apk
 
       - name: Publish signed apk package
         if: env.ANDROID_SIGNING_KEY != null && env.UPLOAD_ARTIFACT == 'true'
