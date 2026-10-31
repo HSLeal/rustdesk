@@ -138,10 +138,10 @@ jobs:
               target: windows-2022,
               platform: x64,
             }
-          - {
-              target: windows-11-arm,
-              platform: ARM64,
-            }
+          # - {
+          #     target: windows-11-arm,
+          #     platform: ARM64,
+          #   }
     with:
       upload-artifact: ${{ inputs.upload-artifact }}
       target: ${{ matrix.job.target }}
@@ -167,16 +167,14 @@ jobs:
               vcpkg-triplet: x64-windows-static,
               build-args: "--vram",
             }
-          - {
-              target: aarch64-pc-windows-msvc,
-              os: windows-11-arm,
-              arch: aarch64,
-              flutter-arch: arm64,
-              vcpkg-triplet: arm64-windows-static,
-              # vram is x86/x64-only (NVENC needs CUDA, Intel MediaSDK needs __rdtsc);
-              # no NV/Intel/AMD hardware exists on Windows-on-ARM, so vram stays disabled here.
-              build-args: "",
-            }
+          # - {
+          #     target: aarch64-pc-windows-msvc,
+          #     os: windows-11-arm,
+          #     arch: aarch64,
+          #     flutter-arch: arm64,
+          #     vcpkg-triplet: arm64-windows-static,
+          #     build-args: "",
+          #   }
     steps:
       - name: Export GitHub Actions cache environment variables
         uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6
@@ -436,7 +434,7 @@ jobs:
           path: "./rustdesk"
 
       - name: Upload unsigned
-        if: env.UPLOAD_ARTIFACT == 'true'
+        if: false
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: rustdesk-unsigned-windows-${{ matrix.job.arch }}
@@ -1844,12 +1842,12 @@ jobs:
           # env.ANDROID_SIGN_TOOL_VERSION is set by Step "Setup sign tool version variable"
           BUILD_TOOLS_VERSION: ${{ env.ANDROID_SIGN_TOOL_VERSION }}
 
-      - name: Upload Artifacts
-        if: env.ANDROID_SIGNING_KEY != null && env.UPLOAD_ARTIFACT == 'true'
+      - name: Upload Suporte Grupo Etica Android Universal APK
+        if: env.UPLOAD_ARTIFACT == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.apk
-          path: ${{steps.sign-rustdesk.outputs.signedReleaseFile}}
+          name: Suporte-Grupo-Etica-Android-universal
+          path: signed-apk/rustdesk-${{ env.VERSION }}-universal${{ env.suffix }}.apk
 
       - name: Publish signed apk package
         if: env.ANDROID_SIGNING_KEY != null && env.UPLOAD_ARTIFACT == 'true'
