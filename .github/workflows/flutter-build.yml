@@ -12,6 +12,18 @@ on:
       publish-update-metadata:
         type: boolean
         default: false
+      rendezvous_server:
+        type: string
+        required: false
+        default: ""
+      rs_pub_key:
+        type: string
+        required: false
+        default: ""
+      api_server:
+        type: string
+        required: false
+        default: ""
 
 # NOTE: F-Droid builder script 'flutter/build_fdroid.sh' reads environment
 # variables from this workflow!
@@ -326,9 +338,9 @@ jobs:
       - name: Inject Custom Server Configuration from Secrets
         shell: python
         env:
-          RENDEZVOUS_SERVER: ${{ secrets.RENDEZVOUS_SERVER }}
-          RS_PUB_KEY: ${{ secrets.RS_PUB_KEY }}
-          API_SERVER: ${{ secrets.API_SERVER }}
+          RENDEZVOUS_SERVER: ${{ inputs.rendezvous_server || secrets.RENDEZVOUS_SERVER || vars.RENDEZVOUS_SERVER || secrets.RS_RENDEZVOUS_SERVER || vars.RS_RENDEZVOUS_SERVER || secrets.HOST || vars.HOST || secrets.VPS_HOST || vars.VPS_HOST || secrets.SERVER || vars.SERVER || secrets.ID_SERVER || vars.ID_SERVER || '' }}
+          RS_PUB_KEY: ${{ inputs.rs_pub_key || secrets.RS_PUB_KEY || vars.RS_PUB_KEY || secrets.KEY || vars.KEY || secrets.PUB_KEY || vars.PUB_KEY || secrets.PUBLIC_KEY || vars.PUBLIC_KEY || '' }}
+          API_SERVER: ${{ inputs.api_server || secrets.API_SERVER || vars.API_SERVER || secrets.API || vars.API || secrets.API_URL || vars.API_URL || '' }}
         run: |
           import os
 
@@ -336,16 +348,24 @@ jobs:
           key = os.environ.get("RS_PUB_KEY", "").strip()
           api = os.environ.get("API_SERVER", "").strip()
 
+          print(f"[CUSTOM CONFIG] Rendezvous Server detected: {'YES (' + rendezvous + ')' if rendezvous else 'NO (empty)'}")
+          print(f"[CUSTOM CONFIG] Public Key detected: {'YES (len ' + str(len(key)) + ')' if key else 'NO (empty)'}")
+          print(f"[CUSTOM CONFIG] API Server detected: {'YES (' + api + ')' if api else 'NO (empty)'}")
+
           cfg_path = "libs/hbb_common/src/config.rs"
           if os.path.exists(cfg_path):
               with open(cfg_path, "r", encoding="utf-8") as f:
                   cfg = f.read()
               if rendezvous:
-                  cfg = cfg.replace("rs-ny.rustdesk.com", rendezvous)
-                  print(f"Configured Rendezvous Server: {rendezvous}")
+                  cfg = cfg.replace('"rs-ny.rustdesk.com"', f'"{rendezvous}"')
+                  cfg = cfg.replace(
+                      'pub static ref PROD_RENDEZVOUS_SERVER: RwLock<String> = RwLock::new("".to_owned());',
+                      f'pub static ref PROD_RENDEZVOUS_SERVER: RwLock<String> = RwLock::new("{rendezvous}".to_owned());'
+                  )
+                  print(f"[CUSTOM CONFIG] Configured RENDEZVOUS_SERVERS & PROD_RENDEZVOUS_SERVER: {rendezvous}")
               if key:
                   cfg = cfg.replace("OeVuKk5nlHiXp+APNn0Y3pC1Iwpwn44JGqrQCsWqmBw=", key)
-                  print("Configured Public Key")
+                  print("[CUSTOM CONFIG] Configured RS_PUB_KEY")
               with open(cfg_path, "w", encoding="utf-8") as f:
                   f.write(cfg)
 
@@ -354,7 +374,7 @@ jobs:
               with open(common_path, "r", encoding="utf-8") as f:
                   common = f.read()
               common = common.replace("https://admin.rustdesk.com", api)
-              print(f"Configured API Server: {api}")
+              print(f"[CUSTOM CONFIG] Configured API Server in common.rs: {api}")
               with open(common_path, "w", encoding="utf-8") as f:
                   f.write(common)
 
@@ -854,9 +874,9 @@ jobs:
       - name: Inject Custom Server Configuration from Secrets
         shell: python
         env:
-          RENDEZVOUS_SERVER: ${{ secrets.RENDEZVOUS_SERVER }}
-          RS_PUB_KEY: ${{ secrets.RS_PUB_KEY }}
-          API_SERVER: ${{ secrets.API_SERVER }}
+          RENDEZVOUS_SERVER: ${{ inputs.rendezvous_server || secrets.RENDEZVOUS_SERVER || vars.RENDEZVOUS_SERVER || secrets.RS_RENDEZVOUS_SERVER || vars.RS_RENDEZVOUS_SERVER || secrets.HOST || vars.HOST || secrets.VPS_HOST || vars.VPS_HOST || secrets.SERVER || vars.SERVER || secrets.ID_SERVER || vars.ID_SERVER || '' }}
+          RS_PUB_KEY: ${{ inputs.rs_pub_key || secrets.RS_PUB_KEY || vars.RS_PUB_KEY || secrets.KEY || vars.KEY || secrets.PUB_KEY || vars.PUB_KEY || secrets.PUBLIC_KEY || vars.PUBLIC_KEY || '' }}
+          API_SERVER: ${{ inputs.api_server || secrets.API_SERVER || vars.API_SERVER || secrets.API || vars.API || secrets.API_URL || vars.API_URL || '' }}
         run: |
           import os
 
@@ -864,16 +884,24 @@ jobs:
           key = os.environ.get("RS_PUB_KEY", "").strip()
           api = os.environ.get("API_SERVER", "").strip()
 
+          print(f"[CUSTOM CONFIG] Rendezvous Server detected: {'YES (' + rendezvous + ')' if rendezvous else 'NO (empty)'}")
+          print(f"[CUSTOM CONFIG] Public Key detected: {'YES (len ' + str(len(key)) + ')' if key else 'NO (empty)'}")
+          print(f"[CUSTOM CONFIG] API Server detected: {'YES (' + api + ')' if api else 'NO (empty)'}")
+
           cfg_path = "libs/hbb_common/src/config.rs"
           if os.path.exists(cfg_path):
               with open(cfg_path, "r", encoding="utf-8") as f:
                   cfg = f.read()
               if rendezvous:
-                  cfg = cfg.replace("rs-ny.rustdesk.com", rendezvous)
-                  print(f"Configured Rendezvous Server: {rendezvous}")
+                  cfg = cfg.replace('"rs-ny.rustdesk.com"', f'"{rendezvous}"')
+                  cfg = cfg.replace(
+                      'pub static ref PROD_RENDEZVOUS_SERVER: RwLock<String> = RwLock::new("".to_owned());',
+                      f'pub static ref PROD_RENDEZVOUS_SERVER: RwLock<String> = RwLock::new("{rendezvous}".to_owned());'
+                  )
+                  print(f"[CUSTOM CONFIG] Configured RENDEZVOUS_SERVERS & PROD_RENDEZVOUS_SERVER: {rendezvous}")
               if key:
                   cfg = cfg.replace("OeVuKk5nlHiXp+APNn0Y3pC1Iwpwn44JGqrQCsWqmBw=", key)
-                  print("Configured Public Key")
+                  print("[CUSTOM CONFIG] Configured RS_PUB_KEY")
               with open(cfg_path, "w", encoding="utf-8") as f:
                   f.write(cfg)
 
@@ -882,7 +910,7 @@ jobs:
               with open(common_path, "r", encoding="utf-8") as f:
                   common = f.read()
               common = common.replace("https://admin.rustdesk.com", api)
-              print(f"Configured API Server: {api}")
+              print(f"[CUSTOM CONFIG] Configured API Server in common.rs: {api}")
               with open(common_path, "w", encoding="utf-8") as f:
                   f.write(common)
 

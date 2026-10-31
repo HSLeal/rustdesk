@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "Grupo Etica" "\0"
-            VALUE "FileDescription", "Suporte Remoto Grupo Etica" "\0"
+            VALUE "FileDescription", "Suporte Grupo Etica³" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "rustdesk" "\0"
-            VALUE "LegalCopyright", "Copyright © 2026 Purslane Tech Pte. Ltd. All rights reserved." "\0"
-            VALUE "OriginalFilename", "rustdesk.exe" "\0"
-            VALUE "ProductName", "Suporte Remoto Grupo Etica" "\0"
+            VALUE "InternalName", "Suporte-Grupo-Etica" "\0"
+            VALUE "LegalCopyright", "Copyright © 2026 Grupo Etica. All rights reserved." "\0"
+            VALUE "OriginalFilename", "Suporte-Grupo-Etica.exe" "\0"
+            VALUE "ProductName", "Suporte Grupo Etica³" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
