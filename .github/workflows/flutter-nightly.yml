@@ -2,22 +2,6 @@ name: Compilar Suporte Grupo Etica
 
 on:
   workflow_dispatch:
-    inputs:
-      rendezvous_server:
-        description: 'Host/IP do servidor VPS (opcional se configurado em secrets/vars)'
-        required: false
-        type: string
-        default: ""
-      rs_pub_key:
-        description: 'Chave pública RS_PUB_KEY (opcional se configurado em secrets/vars)'
-        required: false
-        type: string
-        default: ""
-      api_server:
-        description: 'Servidor API (opcional se configurado em secrets/vars)'
-        required: false
-        type: string
-        default: ""
 
 jobs:
   run-flutter-nightly-build:
@@ -26,6 +10,3 @@ jobs:
     with:
       upload-artifact: true
       upload-tag: "nightly"
-      rendezvous_server: ${{ inputs.rendezvous_server || '' }}
-      rs_pub_key: ${{ inputs.rs_pub_key || '' }}
-      api_server: ${{ inputs.api_server || '' }}

@@ -12,18 +12,13 @@ on:
       publish-update-metadata:
         type: boolean
         default: false
-      rendezvous_server:
-        type: string
+    secrets:
+      RENDEZVOUS_SERVER:
         required: false
-        default: ""
-      rs_pub_key:
-        type: string
+      RS_PUB_KEY:
         required: false
-        default: ""
-      api_server:
-        type: string
+      API_SERVER:
         required: false
-        default: ""
 
 # NOTE: F-Droid builder script 'flutter/build_fdroid.sh' reads environment
 # variables from this workflow!
@@ -339,9 +334,9 @@ jobs:
       - name: Inject Custom Server Configuration from Secrets
         shell: python
         env:
-          RENDEZVOUS_SERVER: ${{ inputs.rendezvous_server || secrets.RENDEZVOUS_SERVER || vars.RENDEZVOUS_SERVER || secrets.RS_RENDEZVOUS_SERVER || vars.RS_RENDEZVOUS_SERVER || secrets.HOST || vars.HOST || secrets.VPS_HOST || vars.VPS_HOST || secrets.SERVER || vars.SERVER || secrets.ID_SERVER || vars.ID_SERVER || '' }}
-          RS_PUB_KEY: ${{ inputs.rs_pub_key || secrets.RS_PUB_KEY || vars.RS_PUB_KEY || secrets.KEY || vars.KEY || secrets.PUB_KEY || vars.PUB_KEY || secrets.PUBLIC_KEY || vars.PUBLIC_KEY || '' }}
-          API_SERVER: ${{ inputs.api_server || secrets.API_SERVER || vars.API_SERVER || secrets.API || vars.API || secrets.API_URL || vars.API_URL || '' }}
+          RENDEZVOUS_SERVER: ${{ secrets.RENDEZVOUS_SERVER }}
+          RS_PUB_KEY: ${{ secrets.RS_PUB_KEY }}
+          API_SERVER: ${{ secrets.API_SERVER }}
         run: |
           import os
 
@@ -691,9 +686,9 @@ jobs:
       - name: Inject Custom Server Configuration from Secrets
         shell: python
         env:
-          RENDEZVOUS_SERVER: ${{ inputs.rendezvous_server || secrets.RENDEZVOUS_SERVER || vars.RENDEZVOUS_SERVER || secrets.RS_RENDEZVOUS_SERVER || vars.RS_RENDEZVOUS_SERVER || secrets.HOST || vars.HOST || secrets.VPS_HOST || vars.VPS_HOST || secrets.SERVER || vars.SERVER || secrets.ID_SERVER || vars.ID_SERVER || '' }}
-          RS_PUB_KEY: ${{ inputs.rs_pub_key || secrets.RS_PUB_KEY || vars.RS_PUB_KEY || secrets.KEY || vars.KEY || secrets.PUB_KEY || vars.PUB_KEY || secrets.PUBLIC_KEY || vars.PUBLIC_KEY || '' }}
-          API_SERVER: ${{ inputs.api_server || secrets.API_SERVER || vars.API_SERVER || secrets.API || vars.API || secrets.API_URL || vars.API_URL || '' }}
+          RENDEZVOUS_SERVER: ${{ secrets.RENDEZVOUS_SERVER }}
+          RS_PUB_KEY: ${{ secrets.RS_PUB_KEY }}
+          API_SERVER: ${{ secrets.API_SERVER }}
         run: |
           import os
 
@@ -924,9 +919,9 @@ jobs:
       - name: Inject Custom Server Configuration from Secrets
         shell: python
         env:
-          RENDEZVOUS_SERVER: ${{ inputs.rendezvous_server || secrets.RENDEZVOUS_SERVER || vars.RENDEZVOUS_SERVER || secrets.RS_RENDEZVOUS_SERVER || vars.RS_RENDEZVOUS_SERVER || secrets.HOST || vars.HOST || secrets.VPS_HOST || vars.VPS_HOST || secrets.SERVER || vars.SERVER || secrets.ID_SERVER || vars.ID_SERVER || '' }}
-          RS_PUB_KEY: ${{ inputs.rs_pub_key || secrets.RS_PUB_KEY || vars.RS_PUB_KEY || secrets.KEY || vars.KEY || secrets.PUB_KEY || vars.PUB_KEY || secrets.PUBLIC_KEY || vars.PUBLIC_KEY || '' }}
-          API_SERVER: ${{ inputs.api_server || secrets.API_SERVER || vars.API_SERVER || secrets.API || vars.API || secrets.API_URL || vars.API_URL || '' }}
+          RENDEZVOUS_SERVER: ${{ secrets.RENDEZVOUS_SERVER }}
+          RS_PUB_KEY: ${{ secrets.RS_PUB_KEY }}
+          API_SERVER: ${{ secrets.API_SERVER }}
         run: |
           import os
 
