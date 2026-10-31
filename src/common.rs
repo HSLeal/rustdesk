@@ -121,6 +121,7 @@ impl Drop for SimpleCallOnReturn {
 }
 
 pub fn global_init() -> bool {
+    *hbb_common::config::APP_NAME.write().unwrap() = "Suporte-Grupo-Etica".to_string();
     #[cfg(all(target_os = "linux", feature = "drm"))]
     crate::platform::linux::dispatch_wayland_display_probe();
     #[cfg(target_os = "linux")]
@@ -1210,12 +1211,12 @@ pub async fn do_check_software_update() -> hbb_common::ResultType<()> {
 
 #[inline]
 pub fn get_app_name() -> String {
-    "Suporte Remoto Grupo Etica³".to_string()
+    "Suporte-Grupo-Etica".to_string()
 }
 
 #[inline]
 pub fn is_rustdesk() -> bool {
-    hbb_common::config::APP_NAME.read().unwrap().eq("RustDesk")
+    false
 }
 
 #[inline]
