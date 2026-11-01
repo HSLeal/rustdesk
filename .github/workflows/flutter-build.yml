@@ -362,6 +362,19 @@ jobs:
               if key:
                   cfg = cfg.replace("OeVuKk5nlHiXp+APNn0Y3pC1Iwpwn44JGqrQCsWqmBw=", key)
                   print("[CUSTOM CONFIG] Configured RS_PUB_KEY")
+              default_settings_entries = []
+              if rendezvous:
+                  default_settings_entries.append(f'("custom-rendezvous-server".to_owned(), "{rendezvous}".to_owned())')
+              if key:
+                  default_settings_entries.append(f'("key".to_owned(), "{key}".to_owned())')
+              if api:
+                  default_settings_entries.append(f'("api-server".to_owned(), "{api}".to_owned())')
+              if default_settings_entries:
+                  entries_str = ", ".join(default_settings_entries)
+                  target = 'pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = Default::default();'
+                  replacement = f'pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([{entries_str}]));'
+                  cfg = cfg.replace(target, replacement)
+                  print("[CUSTOM CONFIG] Injected DEFAULT_SETTINGS with custom server and key")
               with open(cfg_path, "w", encoding="utf-8") as f:
                   f.write(cfg)
 
@@ -373,6 +386,29 @@ jobs:
               print(f"[CUSTOM CONFIG] Configured API Server in common.rs: {api}")
               with open(common_path, "w", encoding="utf-8") as f:
                   f.write(common)
+
+          dart_path = "flutter/lib/common.dart"
+          if os.path.exists(dart_path):
+              with open(dart_path, "r", encoding="utf-8") as f:
+                  dart = f.read()
+              if rendezvous:
+                  dart = dart.replace(
+                      ": idServer = options['custom-rendezvous-server'] ?? "",",
+                      f": idServer = options['custom-rendezvous-server'] ?? "{rendezvous}","
+                  )
+              if key:
+                  dart = dart.replace(
+                      "key = options['key'] ?? "";",
+                      f"key = options['key'] ?? "{key}";"
+                  )
+              if api:
+                  dart = dart.replace(
+                      "apiServer = options['api-server'] ?? "",",
+                      f"apiServer = options['api-server'] ?? "{api}";"
+                  )
+              with open(dart_path, "w", encoding="utf-8") as f:
+                  f.write(dart)
+              print("[CUSTOM CONFIG] Configured fallbacks in flutter/lib/common.dart")
 
       - name: Build rustdesk
         run: |
@@ -560,7 +596,7 @@ jobs:
           rm -r -fo ./rustdesk-msi-template
 
       - name: Upload unsigned msi template
-        if: env.UPLOAD_ARTIFACT == 'true'
+        if: false
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: rustdesk-unsigned-msi-template-${{ matrix.job.arch }}
@@ -714,6 +750,19 @@ jobs:
               if key:
                   cfg = cfg.replace("OeVuKk5nlHiXp+APNn0Y3pC1Iwpwn44JGqrQCsWqmBw=", key)
                   print("[CUSTOM CONFIG] Configured RS_PUB_KEY")
+              default_settings_entries = []
+              if rendezvous:
+                  default_settings_entries.append(f'("custom-rendezvous-server".to_owned(), "{rendezvous}".to_owned())')
+              if key:
+                  default_settings_entries.append(f'("key".to_owned(), "{key}".to_owned())')
+              if api:
+                  default_settings_entries.append(f'("api-server".to_owned(), "{api}".to_owned())')
+              if default_settings_entries:
+                  entries_str = ", ".join(default_settings_entries)
+                  target = 'pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = Default::default();'
+                  replacement = f'pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([{entries_str}]));'
+                  cfg = cfg.replace(target, replacement)
+                  print("[CUSTOM CONFIG] Injected DEFAULT_SETTINGS with custom server and key")
               with open(cfg_path, "w", encoding="utf-8") as f:
                   f.write(cfg)
 
@@ -725,6 +774,29 @@ jobs:
               print(f"[CUSTOM CONFIG] Configured API Server in common.rs: {api}")
               with open(common_path, "w", encoding="utf-8") as f:
                   f.write(common)
+
+          dart_path = "flutter/lib/common.dart"
+          if os.path.exists(dart_path):
+              with open(dart_path, "r", encoding="utf-8") as f:
+                  dart = f.read()
+              if rendezvous:
+                  dart = dart.replace(
+                      ": idServer = options['custom-rendezvous-server'] ?? "",",
+                      f": idServer = options['custom-rendezvous-server'] ?? "{rendezvous}","
+                  )
+              if key:
+                  dart = dart.replace(
+                      "key = options['key'] ?? "";",
+                      f"key = options['key'] ?? "{key}";"
+                  )
+              if api:
+                  dart = dart.replace(
+                      "apiServer = options['api-server'] ?? "",",
+                      f"apiServer = options['api-server'] ?? "{api}";"
+                  )
+              with open(dart_path, "w", encoding="utf-8") as f:
+                  f.write(dart)
+              print("[CUSTOM CONFIG] Configured fallbacks in flutter/lib/common.dart")
 
       - name: Build rustdesk
         id: build
@@ -764,7 +836,7 @@ jobs:
           fi
 
       - name: Upload unsigned
-        if: env.UPLOAD_ARTIFACT == 'true'
+        if: false
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: rustdesk-unsigned-windows-${{ matrix.job.arch }}
@@ -947,6 +1019,19 @@ jobs:
               if key:
                   cfg = cfg.replace("OeVuKk5nlHiXp+APNn0Y3pC1Iwpwn44JGqrQCsWqmBw=", key)
                   print("[CUSTOM CONFIG] Configured RS_PUB_KEY")
+              default_settings_entries = []
+              if rendezvous:
+                  default_settings_entries.append(f'("custom-rendezvous-server".to_owned(), "{rendezvous}".to_owned())')
+              if key:
+                  default_settings_entries.append(f'("key".to_owned(), "{key}".to_owned())')
+              if api:
+                  default_settings_entries.append(f'("api-server".to_owned(), "{api}".to_owned())')
+              if default_settings_entries:
+                  entries_str = ", ".join(default_settings_entries)
+                  target = 'pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = Default::default();'
+                  replacement = f'pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([{entries_str}]));'
+                  cfg = cfg.replace(target, replacement)
+                  print("[CUSTOM CONFIG] Injected DEFAULT_SETTINGS with custom server and key")
               with open(cfg_path, "w", encoding="utf-8") as f:
                   f.write(cfg)
 
@@ -958,6 +1043,29 @@ jobs:
               print(f"[CUSTOM CONFIG] Configured API Server in common.rs: {api}")
               with open(common_path, "w", encoding="utf-8") as f:
                   f.write(common)
+
+          dart_path = "flutter/lib/common.dart"
+          if os.path.exists(dart_path):
+              with open(dart_path, "r", encoding="utf-8") as f:
+                  dart = f.read()
+              if rendezvous:
+                  dart = dart.replace(
+                      ": idServer = options['custom-rendezvous-server'] ?? "",",
+                      f": idServer = options['custom-rendezvous-server'] ?? "{rendezvous}","
+                  )
+              if key:
+                  dart = dart.replace(
+                      "key = options['key'] ?? "";",
+                      f"key = options['key'] ?? "{key}";"
+                  )
+              if api:
+                  dart = dart.replace(
+                      "apiServer = options['api-server'] ?? "",",
+                      f"apiServer = options['api-server'] ?? "{api}";"
+                  )
+              with open(dart_path, "w", encoding="utf-8") as f:
+                  f.write(dart)
+              print("[CUSTOM CONFIG] Configured fallbacks in flutter/lib/common.dart")
 
       - name: Build rustdesk lib
         run: |
@@ -1620,6 +1728,85 @@ jobs:
           prefix-key: rustdesk-lib-cache-android # TODO: drop '-android' part after caches are invalidated
           key: ${{ matrix.job.target }}
 
+      - name: Inject Custom Server Configuration from Secrets
+        shell: python
+        env:
+          RENDEZVOUS_SERVER: ${{ secrets.RENDEZVOUS_SERVER }}
+          RS_PUB_KEY: ${{ secrets.RS_PUB_KEY }}
+          API_SERVER: ${{ secrets.API_SERVER }}
+        run: |
+          import os
+
+          rendezvous = os.environ.get("RENDEZVOUS_SERVER", "").strip()
+          key = os.environ.get("RS_PUB_KEY", "").strip()
+          api = os.environ.get("API_SERVER", "").strip()
+
+          print(f"[CUSTOM CONFIG] Rendezvous Server detected: {'YES (' + rendezvous + ')' if rendezvous else 'NO (empty)'}")
+          print(f"[CUSTOM CONFIG] Public Key detected: {'YES (len ' + str(len(key)) + ')' if key else 'NO (empty)'}")
+          print(f"[CUSTOM CONFIG] API Server detected: {'YES (' + api + ')' if api else 'NO (empty)'}")
+
+          cfg_path = "libs/hbb_common/src/config.rs"
+          if os.path.exists(cfg_path):
+              with open(cfg_path, "r", encoding="utf-8") as f:
+                  cfg = f.read()
+              if rendezvous:
+                  cfg = cfg.replace('"rs-ny.rustdesk.com"', f'"{rendezvous}"')
+                  cfg = cfg.replace(
+                      'pub static ref PROD_RENDEZVOUS_SERVER: RwLock<String> = RwLock::new("".to_owned());',
+                      f'pub static ref PROD_RENDEZVOUS_SERVER: RwLock<String> = RwLock::new("{rendezvous}".to_owned());'
+                  )
+                  print(f"[CUSTOM CONFIG] Configured RENDEZVOUS_SERVERS & PROD_RENDEZVOUS_SERVER: {rendezvous}")
+              if key:
+                  cfg = cfg.replace("OeVuKk5nlHiXp+APNn0Y3pC1Iwpwn44JGqrQCsWqmBw=", key)
+                  print("[CUSTOM CONFIG] Configured RS_PUB_KEY")
+              default_settings_entries = []
+              if rendezvous:
+                  default_settings_entries.append(f'("custom-rendezvous-server".to_owned(), "{rendezvous}".to_owned())')
+              if key:
+                  default_settings_entries.append(f'("key".to_owned(), "{key}".to_owned())')
+              if api:
+                  default_settings_entries.append(f'("api-server".to_owned(), "{api}".to_owned())')
+              if default_settings_entries:
+                  entries_str = ", ".join(default_settings_entries)
+                  target = 'pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = Default::default();'
+                  replacement = f'pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([{entries_str}]));'
+                  cfg = cfg.replace(target, replacement)
+                  print("[CUSTOM CONFIG] Injected DEFAULT_SETTINGS with custom server and key")
+              with open(cfg_path, "w", encoding="utf-8") as f:
+                  f.write(cfg)
+
+          common_path = "src/common.rs"
+          if os.path.exists(common_path) and api:
+              with open(common_path, "r", encoding="utf-8") as f:
+                  common = f.read()
+              common = common.replace("https://admin.rustdesk.com", api)
+              print(f"[CUSTOM CONFIG] Configured API Server in common.rs: {api}")
+              with open(common_path, "w", encoding="utf-8") as f:
+                  f.write(common)
+
+          dart_path = "flutter/lib/common.dart"
+          if os.path.exists(dart_path):
+              with open(dart_path, "r", encoding="utf-8") as f:
+                  dart = f.read()
+              if rendezvous:
+                  dart = dart.replace(
+                      ": idServer = options['custom-rendezvous-server'] ?? "",",
+                      f": idServer = options['custom-rendezvous-server'] ?? "{rendezvous}","
+                  )
+              if key:
+                  dart = dart.replace(
+                      "key = options['key'] ?? "";",
+                      f"key = options['key'] ?? "{key}";"
+                  )
+              if api:
+                  dart = dart.replace(
+                      "apiServer = options['api-server'] ?? "",",
+                      f"apiServer = options['api-server'] ?? "{api}";"
+                  )
+              with open(dart_path, "w", encoding="utf-8") as f:
+                  f.write(dart)
+              print("[CUSTOM CONFIG] Configured fallbacks in flutter/lib/common.dart")
+
       - name: Build rustdesk lib
         env:
           ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
@@ -1655,8 +1842,10 @@ jobs:
         with:
           name: librustdesk.so.${{ matrix.job.target }}
           path: ./target/${{ matrix.job.target }}/release/liblibrustdesk.so
+          retention-days: 1
 
       - name: Build rustdesk
+        if: false
         shell: bash
         env:
           JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
@@ -1718,7 +1907,7 @@ jobs:
 
       - uses: r0adkll/sign-android-release@349ebdef58775b1e0d8099458af0816dc79b6407 # v1
         name: Sign app APK
-        if: env.ANDROID_SIGNING_KEY != null
+        if: false
         id: sign-rustdesk
         with:
           releaseDirectory: ./signed-apk
@@ -1731,14 +1920,14 @@ jobs:
           BUILD_TOOLS_VERSION: ${{ env.ANDROID_SIGN_TOOL_VERSION }}
 
       - name: Upload Suporte Grupo Etica Android APK
-        if: env.UPLOAD_ARTIFACT == 'true'
+        if: false
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: Suporte-Grupo-Etica-Android-${{ matrix.job.arch }}
           path: signed-apk/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.apk
 
       - name: Publish signed apk package
-        if: env.ANDROID_SIGNING_KEY != null && env.UPLOAD_ARTIFACT == 'true'
+        if: false
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
         with:
           prerelease: true
@@ -1747,7 +1936,7 @@ jobs:
             ${{steps.sign-rustdesk.outputs.signedReleaseFile}}
 
       - name: Publish unsigned apk package
-        if: env.ANDROID_SIGNING_KEY == null && env.UPLOAD_ARTIFACT == 'true'
+        if: false
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
         with:
           prerelease: true
@@ -1841,6 +2030,86 @@ jobs:
           name: bridge-artifact
           path: ./
 
+      - name: Inject Custom Server Configuration from Secrets
+        shell: python
+        env:
+          RENDEZVOUS_SERVER: ${{ secrets.RENDEZVOUS_SERVER }}
+          RS_PUB_KEY: ${{ secrets.RS_PUB_KEY }}
+          API_SERVER: ${{ secrets.API_SERVER }}
+        run: |
+          import os
+
+          rendezvous = os.environ.get("RENDEZVOUS_SERVER", "").strip()
+          key = os.environ.get("RS_PUB_KEY", "").strip()
+          api = os.environ.get("API_SERVER", "").strip()
+
+          print(f"[CUSTOM CONFIG] Rendezvous Server detected: {'YES (' + rendezvous + ')' if rendezvous else 'NO (empty)'}")
+          print(f"[CUSTOM CONFIG] Public Key detected: {'YES (len ' + str(len(key)) + ')' if key else 'NO (empty)'}")
+          print(f"[CUSTOM CONFIG] API Server detected: {'YES (' + api + ')' if api else 'NO (empty)'}")
+
+          cfg_path = "libs/hbb_common/src/config.rs"
+          if os.path.exists(cfg_path):
+              with open(cfg_path, "r", encoding="utf-8") as f:
+                  cfg = f.read()
+              if rendezvous:
+                  cfg = cfg.replace('"rs-ny.rustdesk.com"', f'"{rendezvous}"')
+                  cfg = cfg.replace(
+                      'pub static ref PROD_RENDEZVOUS_SERVER: RwLock<String> = RwLock::new("".to_owned());',
+                      f'pub static ref PROD_RENDEZVOUS_SERVER: RwLock<String> = RwLock::new("{rendezvous}".to_owned());'
+                  )
+                  print(f"[CUSTOM CONFIG] Configured RENDEZVOUS_SERVERS & PROD_RENDEZVOUS_SERVER: {rendezvous}")
+              if key:
+                  cfg = cfg.replace("OeVuKk5nlHiXp+APNn0Y3pC1Iwpwn44JGqrQCsWqmBw=", key)
+                  print("[CUSTOM CONFIG] Configured RS_PUB_KEY")
+              default_settings_entries = []
+              if rendezvous:
+                  default_settings_entries.append(f'("custom-rendezvous-server".to_owned(), "{rendezvous}".to_owned())')
+              if key:
+                  default_settings_entries.append(f'("key".to_owned(), "{key}".to_owned())')
+              if api:
+                  default_settings_entries.append(f'("api-server".to_owned(), "{api}".to_owned())')
+              if default_settings_entries:
+                  entries_str = ", ".join(default_settings_entries)
+                  target = 'pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = Default::default();'
+                  replacement = f'pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([{entries_str}]));'
+                  cfg = cfg.replace(target, replacement)
+                  print("[CUSTOM CONFIG] Injected DEFAULT_SETTINGS with custom server and key")
+              with open(cfg_path, "w", encoding="utf-8") as f:
+                  f.write(cfg)
+
+          common_path = "src/common.rs"
+          if os.path.exists(common_path) and api:
+              with open(common_path, "r", encoding="utf-8") as f:
+                  common = f.read()
+              common = common.replace("https://admin.rustdesk.com", api)
+              print(f"[CUSTOM CONFIG] Configured API Server in common.rs: {api}")
+              with open(common_path, "w", encoding="utf-8") as f:
+                  f.write(common)
+
+          dart_path = "flutter/lib/common.dart"
+          if os.path.exists(dart_path):
+              with open(dart_path, "r", encoding="utf-8") as f:
+                  dart = f.read()
+              if rendezvous:
+                  dart = dart.replace(
+                      ": idServer = options['custom-rendezvous-server'] ?? "",",
+                      f": idServer = options['custom-rendezvous-server'] ?? "{rendezvous}","
+                  )
+              if key:
+                  dart = dart.replace(
+                      "key = options['key'] ?? "";",
+                      f"key = options['key'] ?? "{key}";"
+                  )
+              if api:
+                  dart = dart.replace(
+                      "apiServer = options['api-server'] ?? "",",
+                      f"apiServer = options['api-server'] ?? "{api}";"
+                  )
+              with open(dart_path, "w", encoding="utf-8") as f:
+                  f.write(dart)
+              print("[CUSTOM CONFIG] Configured fallbacks in flutter/lib/common.dart")
+
+
       - name: Download Rustdesk library from Artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
@@ -1919,7 +2188,7 @@ jobs:
         if: env.UPLOAD_ARTIFACT == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: Suporte-Grupo-Etica-Android-universal
+          name: Suporte-Grupo-Etica-Android
           path: signed-apk/rustdesk-${{ env.VERSION }}-universal${{ env.suffix }}.apk
 
       - name: Publish signed apk package
