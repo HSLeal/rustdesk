@@ -4877,6 +4877,231 @@ pub(super) fn get_pids_with_first_arg_by_wmic<S1: AsRef<str>, S2: AsRef<str>>(
         .unwrap_or_default()
 }
 
+
+#[derive(Debug, Clone, Default)]
+pub struct EtticaClientInfo {
+    pub client: String,
+    pub fantasia: String,
+    pub caixa: String,
+    pub user_logged: String,
+    pub pc_name: String,
+    pub cnpj: String,
+    pub versao_pdv: String,
+    pub versao_gestor: String,
+}
+
+impl EtticaClientInfo {
+    pub fn group_name(&self) -> String {
+        if !self.client.is_empty() {
+            self.client.clone()
+        } else {
+            self.fantasia.clone()
+        }
+    }
+
+    pub fn device_name(&self) -> String {
+        let pc = if !self.pc_name.is_empty() {
+            &self.pc_name
+        } else {
+            ""
+        };
+        let company = if !self.fantasia.is_empty() {
+            &self.fantasia
+        } else {
+            &self.client
+        };
+        let mut prefix = company.as_str();
+        let upper = prefix.to_uppercase();
+        for suff in &[" EIRELI", " LTDA", " ME", " EPP", " S/A", " SA", " S.A."] {
+            if upper.ends_with(suff) {
+                prefix = &prefix[..prefix.len() - suff.len()];
+                break;
+            }
+        }
+        let prefix = prefix.trim();
+
+        if !self.caixa.is_empty() && self.caixa != "000" && self.caixa != "0" {
+            if !pc.is_empty() {
+                format!("{prefix} - Cx {} ({pc})", self.caixa)
+            } else {
+                format!("{prefix} - Cx {}", self.caixa)
+            }
+        } else if !self.versao_gestor.is_empty() && self.versao_pdv.is_empty() {
+            if !pc.is_empty() {
+                format!("{prefix} - Servidor ({pc})")
+            } else {
+                format!("{prefix} - Servidor")
+            }
+        } else {
+            if !pc.is_empty() {
+                format!("{prefix} - {pc}")
+            } else {
+                prefix.to_string()
+            }
+        }
+    }
+
+    pub fn alias(&self) -> String {
+        let pc = if !self.pc_name.is_empty() {
+            &self.pc_name
+        } else {
+            ""
+        };
+        if !self.caixa.is_empty() && self.caixa != "000" && self.caixa != "0" {
+            if !pc.is_empty() {
+                format!("Cx {} ({pc})", self.caixa)
+            } else {
+                format!("Cx {}", self.caixa)
+            }
+        } else if !self.versao_gestor.is_empty() && self.versao_pdv.is_empty() {
+            if !pc.is_empty() {
+                format!("Servidor ({pc})")
+            } else {
+                "Servidor".to_string()
+            }
+        } else {
+            pc.to_string()
+        }
+    }
+
+    pub fn note(&self) -> String {
+        let mut parts = Vec::new();
+        if !self.cnpj.is_empty() {
+            parts.push(format!("CNPJ: {}", self.cnpj));
+        }
+        if !self.caixa.is_empty() {
+            parts.push(format!("Cx: {}", self.caixa));
+        }
+        if !self.user_logged.is_empty() {
+            parts.push(format!("User: {}", self.user_logged));
+        }
+        if !self.versao_pdv.is_empty() {
+            parts.push(format!("PDV: {}", self.versao_pdv));
+        } else if !self.versao_gestor.is_empty() {
+            parts.push(format!("Gestor: {}", self.versao_gestor));
+        }
+        parts.join(" | ")
+    }
+}
+
+pub fn parse_ettica_content(content: &str) -> Option<EtticaClientInfo> {
+    if !content.contains("Cliente:") && !content.contains("CNPJ/CPF:") {
+        return None;
+    }
+
+    let mut info = EtticaClientInfo::default();
+    for line in content.lines() {
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        if let Some((k, v)) = line.split_once(':') {
+            let k = k.trim();
+            let v = v.trim();
+            if k.eq_ignore_ascii_case("Cliente") {
+                info.client = v.to_string();
+            } else if k.eq_ignore_ascii_case("Fantasia") {
+                info.fantasia = v.to_string();
+            } else if k.eq_ignore_ascii_case("Caixa/Serie") || k.eq_ignore_ascii_case("Caixa") {
+                info.caixa = v.to_string();
+            } else if k.eq_ignore_ascii_case("Usuário Logado") || k.eq_ignore_ascii_case("Usuario Logado") {
+                info.user_logged = v.to_string();
+            } else if k.eq_ignore_ascii_case("Nome PC") || k.eq_ignore_ascii_case("NomePC") {
+                info.pc_name = v.to_string();
+            } else if k.eq_ignore_ascii_case("CNPJ/CPF") || k.eq_ignore_ascii_case("CNPJ") || k.eq_ignore_ascii_case("CPF") {
+                info.cnpj = v.to_string();
+            } else if k.eq_ignore_ascii_case("Versão PDV") || k.eq_ignore_ascii_case("Versao PDV") {
+                info.versao_pdv = v.to_string();
+            } else if k.eq_ignore_ascii_case("Versão Gestor") || k.eq_ignore_ascii_case("Versao Gestor") {
+                info.versao_gestor = v.to_string();
+            }
+        }
+    }
+
+    if !info.client.is_empty() || !info.fantasia.is_empty() {
+        Some(info)
+    } else {
+        None
+    }
+}
+
+pub fn get_ettica_client_info() -> Option<EtticaClientInfo> {
+    for dir in &[r"C:\ettica\exec", r"D:\ettica\exec"] {
+        let path = std::path::Path::new(dir);
+        if !path.is_dir() {
+            continue;
+        }
+        if let Ok(entries) = std::fs::read_dir(path) {
+            let mut candidates: Vec<(std::time::SystemTime, std::path::PathBuf)> = Vec::new();
+            for entry in entries.flatten() {
+                let p = entry.path();
+                if p.is_file() {
+                    let is_txt = p
+                        .extension()
+                        .and_then(|e| e.to_str())
+                        .map(|e| e.eq_ignore_ascii_case("txt"))
+                        .unwrap_or(false);
+                    if is_txt {
+                        let mtime = entry
+                            .metadata()
+                            .and_then(|m| m.modified())
+                            .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
+                        candidates.push((mtime, p));
+                    }
+                }
+            }
+            candidates.sort_by(|a, b| b.0.cmp(&a.0));
+
+            for (_, file_path) in candidates {
+                if let Ok(bytes) = std::fs::read(&file_path) {
+                    let content = if let Ok(s) = std::str::from_utf8(&bytes) {
+                        s.to_string()
+                    } else {
+                        bytes
+                            .iter()
+                            .map(|&b| match b {
+                                0x80 => '€',
+                                0x82 => '‚',
+                                0x83 => 'ƒ',
+                                0x84 => '„',
+                                0x85 => '…',
+                                0x86 => '†',
+                                0x87 => '‡',
+                                0x88 => 'ˆ',
+                                0x89 => '‰',
+                                0x8a => 'Š',
+                                0x8b => '‹',
+                                0x8c => 'Œ',
+                                0x8e => 'Ž',
+                                0x91 => '‘',
+                                0x92 => '’',
+                                0x93 => '“',
+                                0x94 => '”',
+                                0x95 => '•',
+                                0x96 => '–',
+                                0x97 => '—',
+                                0x98 => '˜',
+                                0x99 => '™',
+                                0x9a => 'š',
+                                0x9b => '›',
+                                0x9c => 'œ',
+                                0x9e => 'ž',
+                                0x9f => 'Ÿ',
+                                _ => b as char,
+                            })
+                            .collect()
+                    };
+
+                    if let Some(info) = parse_ettica_content(&content) {
+                        return Some(info);
+                    }
+                }
+            }
+        }
+    }
+    None
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -4978,5 +5203,22 @@ ProcessId=10136
             arg,
         );
         assert_eq!(pids.len(), 0);
+    }
+
+    #[test]
+    fn test_parse_ettica_content() {
+        let sample = "CNPJ/CPF:34150279000101\n\
+            Cliente:HEBROM PRESTADORA DE SERVICOS EIRELI\n\
+            Fantasia:HEBROM PRESTADORA DE SERVICOS EIRELI\n\
+            Caixa/Serie:003\n\
+            Usu\u{00e1}rio Logado:1-ADMIN\n\
+            Nome PC:HELTON\n\
+            Vers\u{00e3}o Gestor: 26/10/2026 11:39:21\n\
+            Vers\u{00e3}o PDV: 05/10/2026 09:38:04";
+        let info = parse_ettica_content(sample).unwrap();
+        assert_eq!(info.group_name(), "HEBROM PRESTADORA DE SERVICOS EIRELI");
+        assert_eq!(info.device_name(), "HEBROM PRESTADORA DE SERVICOS - Cx 003 (HELTON)");
+        assert_eq!(info.alias(), "Cx 003 (HELTON)");
+        assert_eq!(info.note(), "CNPJ: 34150279000101 | Cx: 003 | User: 1-ADMIN | PDV: 05/10/2026 09:38:04");
     }
 }

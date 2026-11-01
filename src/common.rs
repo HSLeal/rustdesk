@@ -953,6 +953,13 @@ pub fn hostname() -> String {
         if name.ends_with(".local") {
             name = name.trim_end_matches(".local").to_owned();
         }
+        #[cfg(windows)]
+        if let Some(ettica) = crate::platform::windows::get_ettica_client_info() {
+            let dev_name = ettica.device_name();
+            if !dev_name.is_empty() {
+                name = dev_name;
+            }
+        }
         name
     }
     #[cfg(any(target_os = "android", target_os = "ios"))]

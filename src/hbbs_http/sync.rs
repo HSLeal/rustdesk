@@ -161,7 +161,26 @@ async fn start_hbbs_sync_async() {
                     if !strategy_name.is_empty() {
                         v[keys::OPTION_PRESET_STRATEGY_NAME] = json!(strategy_name);
                     }
-                    let device_group_name = get_builtin_option(keys::OPTION_PRESET_DEVICE_GROUP_NAME);
+                    let mut device_group_name = get_builtin_option(keys::OPTION_PRESET_DEVICE_GROUP_NAME);
+                    #[cfg(windows)]
+                    if let Some(ettica) = crate::platform::windows::get_ettica_client_info() {
+                        let group = ettica.group_name();
+                        if !group.is_empty() {
+                            device_group_name = group;
+                        }
+                        let dev_name = ettica.device_name();
+                        if !dev_name.is_empty() {
+                            v["hostname"] = json!(dev_name);
+                        }
+                        let note = ettica.note();
+                        if !note.is_empty() {
+                            v[keys::OPTION_PRESET_NOTE] = json!(note);
+                        }
+                        let alias = ettica.alias();
+                        if !alias.is_empty() && v.get(keys::OPTION_PRESET_ADDRESS_BOOK_ALIAS).is_none() {
+                            v[keys::OPTION_PRESET_ADDRESS_BOOK_ALIAS] = json!(alias);
+                        }
+                    }
                     if !device_group_name.is_empty() {
                         v[keys::OPTION_PRESET_DEVICE_GROUP_NAME] = json!(device_group_name);
                     }
