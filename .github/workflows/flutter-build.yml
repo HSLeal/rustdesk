@@ -393,18 +393,18 @@ jobs:
                   dart = f.read()
               if rendezvous:
                   dart = dart.replace(
-                      ": idServer = options['custom-rendezvous-server'] ?? "",",
-                      f": idServer = options['custom-rendezvous-server'] ?? "{rendezvous}","
+                      ''': idServer = options['custom-rendezvous-server'] ?? "",''',
+                      f": idServer = options['custom-rendezvous-server'] ?? '{rendezvous}',"
                   )
               if key:
                   dart = dart.replace(
-                      "key = options['key'] ?? "";",
-                      f"key = options['key'] ?? "{key}";"
+                      '''key = options['key'] ?? "";''',
+                      f"key = options['key'] ?? '{key}';"
                   )
               if api:
                   dart = dart.replace(
-                      "apiServer = options['api-server'] ?? "",",
-                      f"apiServer = options['api-server'] ?? "{api}";"
+                      '''apiServer = options['api-server'] ?? "",''',
+                      f"apiServer = options['api-server'] ?? '{api}',"
                   )
               with open(dart_path, "w", encoding="utf-8") as f:
                   f.write(dart)
@@ -783,18 +783,18 @@ jobs:
                   dart = f.read()
               if rendezvous:
                   dart = dart.replace(
-                      ": idServer = options['custom-rendezvous-server'] ?? "",",
-                      f": idServer = options['custom-rendezvous-server'] ?? "{rendezvous}","
+                      ''': idServer = options['custom-rendezvous-server'] ?? "",''',
+                      f": idServer = options['custom-rendezvous-server'] ?? '{rendezvous}',"
                   )
               if key:
                   dart = dart.replace(
-                      "key = options['key'] ?? "";",
-                      f"key = options['key'] ?? "{key}";"
+                      '''key = options['key'] ?? "";''',
+                      f"key = options['key'] ?? '{key}';"
                   )
               if api:
                   dart = dart.replace(
-                      "apiServer = options['api-server'] ?? "",",
-                      f"apiServer = options['api-server'] ?? "{api}";"
+                      '''apiServer = options['api-server'] ?? "",''',
+                      f"apiServer = options['api-server'] ?? '{api}',"
                   )
               with open(dart_path, "w", encoding="utf-8") as f:
                   f.write(dart)
@@ -1053,18 +1053,18 @@ jobs:
                   dart = f.read()
               if rendezvous:
                   dart = dart.replace(
-                      ": idServer = options['custom-rendezvous-server'] ?? "",",
-                      f": idServer = options['custom-rendezvous-server'] ?? "{rendezvous}","
+                      ''': idServer = options['custom-rendezvous-server'] ?? "",''',
+                      f": idServer = options['custom-rendezvous-server'] ?? '{rendezvous}',"
                   )
               if key:
                   dart = dart.replace(
-                      "key = options['key'] ?? "";",
-                      f"key = options['key'] ?? "{key}";"
+                      '''key = options['key'] ?? "";''',
+                      f"key = options['key'] ?? '{key}';"
                   )
               if api:
                   dart = dart.replace(
-                      "apiServer = options['api-server'] ?? "",",
-                      f"apiServer = options['api-server'] ?? "{api}";"
+                      '''apiServer = options['api-server'] ?? "",''',
+                      f"apiServer = options['api-server'] ?? '{api}',"
                   )
               with open(dart_path, "w", encoding="utf-8") as f:
                   f.write(dart)
@@ -1793,18 +1793,18 @@ jobs:
                   dart = f.read()
               if rendezvous:
                   dart = dart.replace(
-                      ": idServer = options['custom-rendezvous-server'] ?? "",",
-                      f": idServer = options['custom-rendezvous-server'] ?? "{rendezvous}","
+                      ''': idServer = options['custom-rendezvous-server'] ?? "",''',
+                      f": idServer = options['custom-rendezvous-server'] ?? '{rendezvous}',"
                   )
               if key:
                   dart = dart.replace(
-                      "key = options['key'] ?? "";",
-                      f"key = options['key'] ?? "{key}";"
+                      '''key = options['key'] ?? "";''',
+                      f"key = options['key'] ?? '{key}';"
                   )
               if api:
                   dart = dart.replace(
-                      "apiServer = options['api-server'] ?? "",",
-                      f"apiServer = options['api-server'] ?? "{api}";"
+                      '''apiServer = options['api-server'] ?? "",''',
+                      f"apiServer = options['api-server'] ?? '{api}',"
                   )
               with open(dart_path, "w", encoding="utf-8") as f:
                   f.write(dart)
@@ -2095,18 +2095,18 @@ jobs:
                   dart = f.read()
               if rendezvous:
                   dart = dart.replace(
-                      ": idServer = options['custom-rendezvous-server'] ?? "",",
-                      f": idServer = options['custom-rendezvous-server'] ?? "{rendezvous}","
+                      ''': idServer = options['custom-rendezvous-server'] ?? "",''',
+                      f": idServer = options['custom-rendezvous-server'] ?? '{rendezvous}',"
                   )
               if key:
                   dart = dart.replace(
-                      "key = options['key'] ?? "";",
-                      f"key = options['key'] ?? "{key}";"
+                      '''key = options['key'] ?? "";''',
+                      f"key = options['key'] ?? '{key}';"
                   )
               if api:
                   dart = dart.replace(
-                      "apiServer = options['api-server'] ?? "",",
-                      f"apiServer = options['api-server'] ?? "{api}";"
+                      '''apiServer = options['api-server'] ?? "",''',
+                      f"apiServer = options['api-server'] ?? '{api}',"
                   )
               with open(dart_path, "w", encoding="utf-8") as f:
                   f.write(dart)
