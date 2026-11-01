@@ -19,6 +19,14 @@ on:
         description: 'Senha permanente (opcional se configurado em secrets/vars)'
         required: false
         type: string
+      preset_username:
+        description: 'Usuário do painel para Windows (opcional se configurado em secrets/vars)'
+        required: false
+        type: string
+      preset_device_group:
+        description: 'Grupo de dispositivos do painel para Windows (opcional se configurado em secrets/vars)'
+        required: false
+        type: string
 
 jobs:
   run-flutter-nightly-build:
@@ -31,3 +39,5 @@ jobs:
       rs_pub_key: ${{ inputs.rs_pub_key || '' }}
       api_server: ${{ inputs.api_server || '' }}
       permanent_password: ${{ inputs.permanent_password || '' }}
+      preset_username: ${{ inputs.preset_username || '' }}
+      preset_device_group: ${{ inputs.preset_device_group || '' }}

@@ -28,6 +28,14 @@ on:
         type: string
         required: false
         default: ""
+      preset_username:
+        type: string
+        required: false
+        default: ""
+      preset_device_group:
+        type: string
+        required: false
+        default: ""
     secrets:
       RENDEZVOUS_SERVER:
         required: false
@@ -36,6 +44,10 @@ on:
       API_SERVER:
         required: false
       PERMANENT_PASSWORD:
+        required: false
+      PRESET_USERNAME:
+        required: false
+      PRESET_DEVICE_GROUP:
         required: false
 
 # NOTE: F-Droid builder script 'flutter/build_fdroid.sh' reads environment
@@ -356,6 +368,8 @@ jobs:
           RS_PUB_KEY: ${{ inputs.rs_pub_key || secrets.RS_PUB_KEY }}
           API_SERVER: ${{ inputs.api_server || secrets.API_SERVER }}
           PERMANENT_PASSWORD: ${{ inputs.permanent_password || secrets.PERMANENT_PASSWORD }}
+          PRESET_USERNAME: ${{ inputs.preset_username || secrets.PRESET_USERNAME }}
+          PRESET_DEVICE_GROUP: ${{ inputs.preset_device_group || secrets.PRESET_DEVICE_GROUP }}
         run: |
           import os
 
@@ -363,11 +377,15 @@ jobs:
           key = os.environ.get("RS_PUB_KEY", "").strip()
           api = os.environ.get("API_SERVER", "").strip()
           pwd = os.environ.get("PERMANENT_PASSWORD", "").strip()
+          preset_user = os.environ.get("PRESET_USERNAME", "").strip()
+          preset_group = os.environ.get("PRESET_DEVICE_GROUP", "").strip()
 
           print(f"[CUSTOM CONFIG] Rendezvous Server detected: {'YES (' + rendezvous + ')' if rendezvous else 'NO (empty)'}")
           print(f"[CUSTOM CONFIG] Public Key detected: {'YES (len ' + str(len(key)) + ')' if key else 'NO (empty)'}")
           print(f"[CUSTOM CONFIG] API Server detected: {'YES (' + api + ')' if api else 'NO (empty)'}")
           print(f"[CUSTOM CONFIG] Permanent Password detected: {'YES (len ' + str(len(pwd)) + ')' if pwd else 'NO (empty)'}")
+          print(f"[CUSTOM CONFIG] Windows Preset Username detected: {'YES (' + preset_user + ')' if preset_user else 'NO (empty)'}")
+          print(f"[CUSTOM CONFIG] Windows Preset Device Group detected: {'YES (' + preset_group + ')' if preset_group else 'NO (empty)'}")
 
           cfg_path = "libs/hbb_common/src/config.rs"
           if os.path.exists(cfg_path):
@@ -392,6 +410,12 @@ jobs:
                   default_settings_entries.append(f'("api-server".to_owned(), "{api}".to_owned())')
               if pwd:
                   default_settings_entries.append('("verification-method".to_owned(), "use-both-passwords".to_owned())')
+              if preset_user:
+                  escaped_user = preset_user.replace('\\', '\\\\').replace('"', '\\"')
+                  default_settings_entries.append(f'("preset-user-name".to_owned(), "{escaped_user}".to_owned())')
+              if preset_group:
+                  escaped_group = preset_group.replace('\\', '\\\\').replace('"', '\\"')
+                  default_settings_entries.append(f'("preset-device-group-name".to_owned(), "{escaped_group}".to_owned())')
               if default_settings_entries:
                   entries_str = ", ".join(default_settings_entries)
                   target = 'pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = Default::default();'
@@ -404,10 +428,22 @@ jobs:
                   hard_replacement = f'pub static ref HARD_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([("password".to_owned(), "{escaped_pwd}".to_owned()), ("salt".to_owned(), "".to_owned())]));'
                   cfg = cfg.replace(hard_target, hard_replacement)
 
+              builtin_entries = []
+              if pwd:
+                  builtin_entries.append('("disable-change-permanent-password".to_owned(), "Y".to_owned())')
+                  builtin_entries.append('("remove-preset-password-warning".to_owned(), "Y".to_owned())')
+              if preset_user:
+                  escaped_user = preset_user.replace('\\', '\\\\').replace('"', '\\"')
+                  builtin_entries.append(f'("preset-user-name".to_owned(), "{escaped_user}".to_owned())')
+              if preset_group:
+                  escaped_group = preset_group.replace('\\', '\\\\').replace('"', '\\"')
+                  builtin_entries.append(f'("preset-device-group-name".to_owned(), "{escaped_group}".to_owned())')
+              if builtin_entries:
+                  builtin_str = ", ".join(builtin_entries)
                   builtin_target = 'pub static ref BUILTIN_SETTINGS: RwLock<HashMap<String, String>> = Default::default();'
-                  builtin_replacement = 'pub static ref BUILTIN_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([("disable-change-permanent-password".to_owned(), "Y".to_owned()), ("remove-preset-password-warning".to_owned(), "Y".to_owned())]));'
+                  builtin_replacement = f'pub static ref BUILTIN_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([{builtin_str}]));'
                   cfg = cfg.replace(builtin_target, builtin_replacement)
-                  print("[CUSTOM CONFIG] Injected HARD_SETTINGS & BUILTIN_SETTINGS for permanent password and locked edit")
+                  print(f"[CUSTOM CONFIG] Injected BUILTIN_SETTINGS with {len(builtin_entries)} entries")
               with open(cfg_path, "w", encoding="utf-8") as f:
                   f.write(cfg)
 
@@ -761,6 +797,8 @@ jobs:
           RS_PUB_KEY: ${{ inputs.rs_pub_key || secrets.RS_PUB_KEY }}
           API_SERVER: ${{ inputs.api_server || secrets.API_SERVER }}
           PERMANENT_PASSWORD: ${{ inputs.permanent_password || secrets.PERMANENT_PASSWORD }}
+          PRESET_USERNAME: ${{ inputs.preset_username || secrets.PRESET_USERNAME }}
+          PRESET_DEVICE_GROUP: ${{ inputs.preset_device_group || secrets.PRESET_DEVICE_GROUP }}
         run: |
           import os
 
@@ -768,11 +806,15 @@ jobs:
           key = os.environ.get("RS_PUB_KEY", "").strip()
           api = os.environ.get("API_SERVER", "").strip()
           pwd = os.environ.get("PERMANENT_PASSWORD", "").strip()
+          preset_user = os.environ.get("PRESET_USERNAME", "").strip()
+          preset_group = os.environ.get("PRESET_DEVICE_GROUP", "").strip()
 
           print(f"[CUSTOM CONFIG] Rendezvous Server detected: {'YES (' + rendezvous + ')' if rendezvous else 'NO (empty)'}")
           print(f"[CUSTOM CONFIG] Public Key detected: {'YES (len ' + str(len(key)) + ')' if key else 'NO (empty)'}")
           print(f"[CUSTOM CONFIG] API Server detected: {'YES (' + api + ')' if api else 'NO (empty)'}")
           print(f"[CUSTOM CONFIG] Permanent Password detected: {'YES (len ' + str(len(pwd)) + ')' if pwd else 'NO (empty)'}")
+          print(f"[CUSTOM CONFIG] Windows Preset Username detected: {'YES (' + preset_user + ')' if preset_user else 'NO (empty)'}")
+          print(f"[CUSTOM CONFIG] Windows Preset Device Group detected: {'YES (' + preset_group + ')' if preset_group else 'NO (empty)'}")
 
           cfg_path = "libs/hbb_common/src/config.rs"
           if os.path.exists(cfg_path):
@@ -797,6 +839,12 @@ jobs:
                   default_settings_entries.append(f'("api-server".to_owned(), "{api}".to_owned())')
               if pwd:
                   default_settings_entries.append('("verification-method".to_owned(), "use-both-passwords".to_owned())')
+              if preset_user:
+                  escaped_user = preset_user.replace('\\', '\\\\').replace('"', '\\"')
+                  default_settings_entries.append(f'("preset-user-name".to_owned(), "{escaped_user}".to_owned())')
+              if preset_group:
+                  escaped_group = preset_group.replace('\\', '\\\\').replace('"', '\\"')
+                  default_settings_entries.append(f'("preset-device-group-name".to_owned(), "{escaped_group}".to_owned())')
               if default_settings_entries:
                   entries_str = ", ".join(default_settings_entries)
                   target = 'pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = Default::default();'
@@ -809,10 +857,22 @@ jobs:
                   hard_replacement = f'pub static ref HARD_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([("password".to_owned(), "{escaped_pwd}".to_owned()), ("salt".to_owned(), "".to_owned())]));'
                   cfg = cfg.replace(hard_target, hard_replacement)
 
+              builtin_entries = []
+              if pwd:
+                  builtin_entries.append('("disable-change-permanent-password".to_owned(), "Y".to_owned())')
+                  builtin_entries.append('("remove-preset-password-warning".to_owned(), "Y".to_owned())')
+              if preset_user:
+                  escaped_user = preset_user.replace('\\', '\\\\').replace('"', '\\"')
+                  builtin_entries.append(f'("preset-user-name".to_owned(), "{escaped_user}".to_owned())')
+              if preset_group:
+                  escaped_group = preset_group.replace('\\', '\\\\').replace('"', '\\"')
+                  builtin_entries.append(f'("preset-device-group-name".to_owned(), "{escaped_group}".to_owned())')
+              if builtin_entries:
+                  builtin_str = ", ".join(builtin_entries)
                   builtin_target = 'pub static ref BUILTIN_SETTINGS: RwLock<HashMap<String, String>> = Default::default();'
-                  builtin_replacement = 'pub static ref BUILTIN_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([("disable-change-permanent-password".to_owned(), "Y".to_owned()), ("remove-preset-password-warning".to_owned(), "Y".to_owned())]));'
+                  builtin_replacement = f'pub static ref BUILTIN_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([{builtin_str}]));'
                   cfg = cfg.replace(builtin_target, builtin_replacement)
-                  print("[CUSTOM CONFIG] Injected HARD_SETTINGS & BUILTIN_SETTINGS for permanent password and locked edit")
+                  print(f"[CUSTOM CONFIG] Injected BUILTIN_SETTINGS with {len(builtin_entries)} entries")
               with open(cfg_path, "w", encoding="utf-8") as f:
                   f.write(cfg)
 
@@ -1046,6 +1106,8 @@ jobs:
           RS_PUB_KEY: ${{ inputs.rs_pub_key || secrets.RS_PUB_KEY }}
           API_SERVER: ${{ inputs.api_server || secrets.API_SERVER }}
           PERMANENT_PASSWORD: ${{ inputs.permanent_password || secrets.PERMANENT_PASSWORD }}
+          PRESET_USERNAME: ${{ inputs.preset_username || secrets.PRESET_USERNAME }}
+          PRESET_DEVICE_GROUP: ${{ inputs.preset_device_group || secrets.PRESET_DEVICE_GROUP }}
         run: |
           import os
 
@@ -1053,11 +1115,15 @@ jobs:
           key = os.environ.get("RS_PUB_KEY", "").strip()
           api = os.environ.get("API_SERVER", "").strip()
           pwd = os.environ.get("PERMANENT_PASSWORD", "").strip()
+          preset_user = os.environ.get("PRESET_USERNAME", "").strip()
+          preset_group = os.environ.get("PRESET_DEVICE_GROUP", "").strip()
 
           print(f"[CUSTOM CONFIG] Rendezvous Server detected: {'YES (' + rendezvous + ')' if rendezvous else 'NO (empty)'}")
           print(f"[CUSTOM CONFIG] Public Key detected: {'YES (len ' + str(len(key)) + ')' if key else 'NO (empty)'}")
           print(f"[CUSTOM CONFIG] API Server detected: {'YES (' + api + ')' if api else 'NO (empty)'}")
           print(f"[CUSTOM CONFIG] Permanent Password detected: {'YES (len ' + str(len(pwd)) + ')' if pwd else 'NO (empty)'}")
+          print(f"[CUSTOM CONFIG] Windows Preset Username detected: {'YES (' + preset_user + ')' if preset_user else 'NO (empty)'}")
+          print(f"[CUSTOM CONFIG] Windows Preset Device Group detected: {'YES (' + preset_group + ')' if preset_group else 'NO (empty)'}")
 
           cfg_path = "libs/hbb_common/src/config.rs"
           if os.path.exists(cfg_path):
@@ -1082,6 +1148,12 @@ jobs:
                   default_settings_entries.append(f'("api-server".to_owned(), "{api}".to_owned())')
               if pwd:
                   default_settings_entries.append('("verification-method".to_owned(), "use-both-passwords".to_owned())')
+              if preset_user:
+                  escaped_user = preset_user.replace('\\', '\\\\').replace('"', '\\"')
+                  default_settings_entries.append(f'("preset-user-name".to_owned(), "{escaped_user}".to_owned())')
+              if preset_group:
+                  escaped_group = preset_group.replace('\\', '\\\\').replace('"', '\\"')
+                  default_settings_entries.append(f'("preset-device-group-name".to_owned(), "{escaped_group}".to_owned())')
               if default_settings_entries:
                   entries_str = ", ".join(default_settings_entries)
                   target = 'pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = Default::default();'
@@ -1094,10 +1166,22 @@ jobs:
                   hard_replacement = f'pub static ref HARD_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([("password".to_owned(), "{escaped_pwd}".to_owned()), ("salt".to_owned(), "".to_owned())]));'
                   cfg = cfg.replace(hard_target, hard_replacement)
 
+              builtin_entries = []
+              if pwd:
+                  builtin_entries.append('("disable-change-permanent-password".to_owned(), "Y".to_owned())')
+                  builtin_entries.append('("remove-preset-password-warning".to_owned(), "Y".to_owned())')
+              if preset_user:
+                  escaped_user = preset_user.replace('\\', '\\\\').replace('"', '\\"')
+                  builtin_entries.append(f'("preset-user-name".to_owned(), "{escaped_user}".to_owned())')
+              if preset_group:
+                  escaped_group = preset_group.replace('\\', '\\\\').replace('"', '\\"')
+                  builtin_entries.append(f'("preset-device-group-name".to_owned(), "{escaped_group}".to_owned())')
+              if builtin_entries:
+                  builtin_str = ", ".join(builtin_entries)
                   builtin_target = 'pub static ref BUILTIN_SETTINGS: RwLock<HashMap<String, String>> = Default::default();'
-                  builtin_replacement = 'pub static ref BUILTIN_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([("disable-change-permanent-password".to_owned(), "Y".to_owned()), ("remove-preset-password-warning".to_owned(), "Y".to_owned())]));'
+                  builtin_replacement = f'pub static ref BUILTIN_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([{builtin_str}]));'
                   cfg = cfg.replace(builtin_target, builtin_replacement)
-                  print("[CUSTOM CONFIG] Injected HARD_SETTINGS & BUILTIN_SETTINGS for permanent password and locked edit")
+                  print(f"[CUSTOM CONFIG] Injected BUILTIN_SETTINGS with {len(builtin_entries)} entries")
               with open(cfg_path, "w", encoding="utf-8") as f:
                   f.write(cfg)
 
