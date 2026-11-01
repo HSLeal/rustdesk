@@ -36,6 +36,10 @@ on:
         type: string
         required: false
         default: ""
+      build_target:
+        type: string
+        required: false
+        default: "all"
     secrets:
       RENDEZVOUS_SERVER:
         required: false
@@ -166,6 +170,7 @@ jobs:
     uses: ./.github/workflows/bridge.yml
 
   build-RustDeskTempTopMostWindow:
+    if: inputs.build_target == 'all' || inputs.build_target == 'windows_x64' || inputs.build_target == 'windows_all' || inputs.build_target == ''
     needs: [validate-update-metadata-keys]
     uses: ./.github/workflows/third-party-RustDeskTempTopMostWindow.yml
     strategy:
@@ -188,6 +193,7 @@ jobs:
       target_version: Windows10
 
   build-for-windows-flutter:
+    if: inputs.build_target == 'all' || inputs.build_target == 'windows_x64' || inputs.build_target == 'windows_all' || inputs.build_target == ''
     name: ${{ matrix.job.target }}
     needs: [build-RustDeskTempTopMostWindow, generate-bridge]
     runs-on: ${{ matrix.job.os }}
@@ -707,6 +713,7 @@ jobs:
 
   # The fallback for the flutter version, we use Sciter for 32bit Windows.
   build-for-windows-sciter:
+    if: inputs.build_target == 'all' || inputs.build_target == 'windows_all' || inputs.build_target == ''
     name: ${{ matrix.job.target }} (${{ matrix.job.os }})
     needs: [validate-update-metadata-keys]
     runs-on: ${{ matrix.job.os }}
@@ -1721,6 +1728,7 @@ jobs:
           files: rustdesk-${{ env.VERSION }}-unsigned.tar.gz
 
   build-rustdesk-android:
+    if: inputs.build_target == 'all' || inputs.build_target == 'android' || inputs.build_target == ''
     needs: [generate-bridge]
     name: build rustdesk android apk ${{ matrix.job.target }}
     runs-on: ${{ matrix.job.os }}

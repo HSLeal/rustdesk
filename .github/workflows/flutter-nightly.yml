@@ -27,6 +27,16 @@ on:
         description: 'Grupo de dispositivos do painel para Windows (opcional se configurado em secrets/vars)'
         required: false
         type: string
+      build_target:
+        description: 'O que compilar'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - windows_x64
+          - windows_all
+          - android
 
 jobs:
   run-flutter-nightly-build:
@@ -41,3 +51,4 @@ jobs:
       permanent_password: ${{ inputs.permanent_password || '' }}
       preset_username: ${{ inputs.preset_username || '' }}
       preset_device_group: ${{ inputs.preset_device_group || '' }}
+      build_target: ${{ inputs.build_target || 'all' }}
