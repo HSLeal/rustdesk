@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">RustDesk</string>
-    <string name="accessibility_service_description">Allow other devices to control your phone using virtual touch, when RustDesk screen sharing is established</string>
-    <string name="foreground_service_special_use_subtype">Keeps the RustDesk remote desktop host available for authorized unattended connections and foreground notifications without starting screen capture before user approval.</string>
+    <string name="app_name">Suporte Grupo Etica³</string>
+    <string name="accessibility_service_description">Permite que outros dispositivos controlem seu telefone usando toque virtual, quando o compartilhamento de tela do Suporte Grupo Etica for estabelecido</string>
+    <string name="foreground_service_special_use_subtype">Mantém o serviço de suporte remoto Suporte Grupo Etica disponível para conexões autorizadas e notificações em primeiro plano.</string>
 </resources>
