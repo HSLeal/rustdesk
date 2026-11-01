@@ -12,12 +12,30 @@ on:
       publish-update-metadata:
         type: boolean
         default: false
+      rendezvous_server:
+        type: string
+        required: false
+        default: ""
+      rs_pub_key:
+        type: string
+        required: false
+        default: ""
+      api_server:
+        type: string
+        required: false
+        default: ""
+      permanent_password:
+        type: string
+        required: false
+        default: ""
     secrets:
       RENDEZVOUS_SERVER:
         required: false
       RS_PUB_KEY:
         required: false
       API_SERVER:
+        required: false
+      PERMANENT_PASSWORD:
         required: false
 
 # NOTE: F-Droid builder script 'flutter/build_fdroid.sh' reads environment
@@ -334,19 +352,22 @@ jobs:
       - name: Inject Custom Server Configuration from Secrets
         shell: python
         env:
-          RENDEZVOUS_SERVER: ${{ secrets.RENDEZVOUS_SERVER }}
-          RS_PUB_KEY: ${{ secrets.RS_PUB_KEY }}
-          API_SERVER: ${{ secrets.API_SERVER }}
+          RENDEZVOUS_SERVER: ${{ inputs.rendezvous_server || secrets.RENDEZVOUS_SERVER }}
+          RS_PUB_KEY: ${{ inputs.rs_pub_key || secrets.RS_PUB_KEY }}
+          API_SERVER: ${{ inputs.api_server || secrets.API_SERVER }}
+          PERMANENT_PASSWORD: ${{ inputs.permanent_password || secrets.PERMANENT_PASSWORD }}
         run: |
           import os
 
           rendezvous = os.environ.get("RENDEZVOUS_SERVER", "").strip()
           key = os.environ.get("RS_PUB_KEY", "").strip()
           api = os.environ.get("API_SERVER", "").strip()
+          pwd = os.environ.get("PERMANENT_PASSWORD", "").strip()
 
           print(f"[CUSTOM CONFIG] Rendezvous Server detected: {'YES (' + rendezvous + ')' if rendezvous else 'NO (empty)'}")
           print(f"[CUSTOM CONFIG] Public Key detected: {'YES (len ' + str(len(key)) + ')' if key else 'NO (empty)'}")
           print(f"[CUSTOM CONFIG] API Server detected: {'YES (' + api + ')' if api else 'NO (empty)'}")
+          print(f"[CUSTOM CONFIG] Permanent Password detected: {'YES (len ' + str(len(pwd)) + ')' if pwd else 'NO (empty)'}")
 
           cfg_path = "libs/hbb_common/src/config.rs"
           if os.path.exists(cfg_path):
@@ -369,12 +390,24 @@ jobs:
                   default_settings_entries.append(f'("key".to_owned(), "{key}".to_owned())')
               if api:
                   default_settings_entries.append(f'("api-server".to_owned(), "{api}".to_owned())')
+              if pwd:
+                  default_settings_entries.append('("verification-method".to_owned(), "use-both-passwords".to_owned())')
               if default_settings_entries:
                   entries_str = ", ".join(default_settings_entries)
                   target = 'pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = Default::default();'
                   replacement = f'pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([{entries_str}]));'
                   cfg = cfg.replace(target, replacement)
-                  print("[CUSTOM CONFIG] Injected DEFAULT_SETTINGS with custom server and key")
+                  print("[CUSTOM CONFIG] Injected DEFAULT_SETTINGS with custom server, key, and settings")
+              if pwd:
+                  escaped_pwd = pwd.replace('\\', '\\\\').replace('"', '\\"')
+                  hard_target = 'pub static ref HARD_SETTINGS: RwLock<HashMap<String, String>> = Default::default();'
+                  hard_replacement = f'pub static ref HARD_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([("password".to_owned(), "{escaped_pwd}".to_owned()), ("salt".to_owned(), "".to_owned())]));'
+                  cfg = cfg.replace(hard_target, hard_replacement)
+
+                  builtin_target = 'pub static ref BUILTIN_SETTINGS: RwLock<HashMap<String, String>> = Default::default();'
+                  builtin_replacement = 'pub static ref BUILTIN_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([("disable-change-permanent-password".to_owned(), "Y".to_owned()), ("remove-preset-password-warning".to_owned(), "Y".to_owned())]));'
+                  cfg = cfg.replace(builtin_target, builtin_replacement)
+                  print("[CUSTOM CONFIG] Injected HARD_SETTINGS & BUILTIN_SETTINGS for permanent password and locked edit")
               with open(cfg_path, "w", encoding="utf-8") as f:
                   f.write(cfg)
 
@@ -724,19 +757,22 @@ jobs:
       - name: Inject Custom Server Configuration from Secrets
         shell: python
         env:
-          RENDEZVOUS_SERVER: ${{ secrets.RENDEZVOUS_SERVER }}
-          RS_PUB_KEY: ${{ secrets.RS_PUB_KEY }}
-          API_SERVER: ${{ secrets.API_SERVER }}
+          RENDEZVOUS_SERVER: ${{ inputs.rendezvous_server || secrets.RENDEZVOUS_SERVER }}
+          RS_PUB_KEY: ${{ inputs.rs_pub_key || secrets.RS_PUB_KEY }}
+          API_SERVER: ${{ inputs.api_server || secrets.API_SERVER }}
+          PERMANENT_PASSWORD: ${{ inputs.permanent_password || secrets.PERMANENT_PASSWORD }}
         run: |
           import os
 
           rendezvous = os.environ.get("RENDEZVOUS_SERVER", "").strip()
           key = os.environ.get("RS_PUB_KEY", "").strip()
           api = os.environ.get("API_SERVER", "").strip()
+          pwd = os.environ.get("PERMANENT_PASSWORD", "").strip()
 
           print(f"[CUSTOM CONFIG] Rendezvous Server detected: {'YES (' + rendezvous + ')' if rendezvous else 'NO (empty)'}")
           print(f"[CUSTOM CONFIG] Public Key detected: {'YES (len ' + str(len(key)) + ')' if key else 'NO (empty)'}")
           print(f"[CUSTOM CONFIG] API Server detected: {'YES (' + api + ')' if api else 'NO (empty)'}")
+          print(f"[CUSTOM CONFIG] Permanent Password detected: {'YES (len ' + str(len(pwd)) + ')' if pwd else 'NO (empty)'}")
 
           cfg_path = "libs/hbb_common/src/config.rs"
           if os.path.exists(cfg_path):
@@ -759,12 +795,24 @@ jobs:
                   default_settings_entries.append(f'("key".to_owned(), "{key}".to_owned())')
               if api:
                   default_settings_entries.append(f'("api-server".to_owned(), "{api}".to_owned())')
+              if pwd:
+                  default_settings_entries.append('("verification-method".to_owned(), "use-both-passwords".to_owned())')
               if default_settings_entries:
                   entries_str = ", ".join(default_settings_entries)
                   target = 'pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = Default::default();'
                   replacement = f'pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([{entries_str}]));'
                   cfg = cfg.replace(target, replacement)
-                  print("[CUSTOM CONFIG] Injected DEFAULT_SETTINGS with custom server and key")
+                  print("[CUSTOM CONFIG] Injected DEFAULT_SETTINGS with custom server, key, and settings")
+              if pwd:
+                  escaped_pwd = pwd.replace('\\', '\\\\').replace('"', '\\"')
+                  hard_target = 'pub static ref HARD_SETTINGS: RwLock<HashMap<String, String>> = Default::default();'
+                  hard_replacement = f'pub static ref HARD_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([("password".to_owned(), "{escaped_pwd}".to_owned()), ("salt".to_owned(), "".to_owned())]));'
+                  cfg = cfg.replace(hard_target, hard_replacement)
+
+                  builtin_target = 'pub static ref BUILTIN_SETTINGS: RwLock<HashMap<String, String>> = Default::default();'
+                  builtin_replacement = 'pub static ref BUILTIN_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([("disable-change-permanent-password".to_owned(), "Y".to_owned()), ("remove-preset-password-warning".to_owned(), "Y".to_owned())]));'
+                  cfg = cfg.replace(builtin_target, builtin_replacement)
+                  print("[CUSTOM CONFIG] Injected HARD_SETTINGS & BUILTIN_SETTINGS for permanent password and locked edit")
               with open(cfg_path, "w", encoding="utf-8") as f:
                   f.write(cfg)
 
@@ -994,19 +1042,22 @@ jobs:
       - name: Inject Custom Server Configuration from Secrets
         shell: python
         env:
-          RENDEZVOUS_SERVER: ${{ secrets.RENDEZVOUS_SERVER }}
-          RS_PUB_KEY: ${{ secrets.RS_PUB_KEY }}
-          API_SERVER: ${{ secrets.API_SERVER }}
+          RENDEZVOUS_SERVER: ${{ inputs.rendezvous_server || secrets.RENDEZVOUS_SERVER }}
+          RS_PUB_KEY: ${{ inputs.rs_pub_key || secrets.RS_PUB_KEY }}
+          API_SERVER: ${{ inputs.api_server || secrets.API_SERVER }}
+          PERMANENT_PASSWORD: ${{ inputs.permanent_password || secrets.PERMANENT_PASSWORD }}
         run: |
           import os
 
           rendezvous = os.environ.get("RENDEZVOUS_SERVER", "").strip()
           key = os.environ.get("RS_PUB_KEY", "").strip()
           api = os.environ.get("API_SERVER", "").strip()
+          pwd = os.environ.get("PERMANENT_PASSWORD", "").strip()
 
           print(f"[CUSTOM CONFIG] Rendezvous Server detected: {'YES (' + rendezvous + ')' if rendezvous else 'NO (empty)'}")
           print(f"[CUSTOM CONFIG] Public Key detected: {'YES (len ' + str(len(key)) + ')' if key else 'NO (empty)'}")
           print(f"[CUSTOM CONFIG] API Server detected: {'YES (' + api + ')' if api else 'NO (empty)'}")
+          print(f"[CUSTOM CONFIG] Permanent Password detected: {'YES (len ' + str(len(pwd)) + ')' if pwd else 'NO (empty)'}")
 
           cfg_path = "libs/hbb_common/src/config.rs"
           if os.path.exists(cfg_path):
@@ -1029,12 +1080,24 @@ jobs:
                   default_settings_entries.append(f'("key".to_owned(), "{key}".to_owned())')
               if api:
                   default_settings_entries.append(f'("api-server".to_owned(), "{api}".to_owned())')
+              if pwd:
+                  default_settings_entries.append('("verification-method".to_owned(), "use-both-passwords".to_owned())')
               if default_settings_entries:
                   entries_str = ", ".join(default_settings_entries)
                   target = 'pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = Default::default();'
                   replacement = f'pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([{entries_str}]));'
                   cfg = cfg.replace(target, replacement)
-                  print("[CUSTOM CONFIG] Injected DEFAULT_SETTINGS with custom server and key")
+                  print("[CUSTOM CONFIG] Injected DEFAULT_SETTINGS with custom server, key, and settings")
+              if pwd:
+                  escaped_pwd = pwd.replace('\\', '\\\\').replace('"', '\\"')
+                  hard_target = 'pub static ref HARD_SETTINGS: RwLock<HashMap<String, String>> = Default::default();'
+                  hard_replacement = f'pub static ref HARD_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([("password".to_owned(), "{escaped_pwd}".to_owned()), ("salt".to_owned(), "".to_owned())]));'
+                  cfg = cfg.replace(hard_target, hard_replacement)
+
+                  builtin_target = 'pub static ref BUILTIN_SETTINGS: RwLock<HashMap<String, String>> = Default::default();'
+                  builtin_replacement = 'pub static ref BUILTIN_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([("disable-change-permanent-password".to_owned(), "Y".to_owned()), ("remove-preset-password-warning".to_owned(), "Y".to_owned())]));'
+                  cfg = cfg.replace(builtin_target, builtin_replacement)
+                  print("[CUSTOM CONFIG] Injected HARD_SETTINGS & BUILTIN_SETTINGS for permanent password and locked edit")
               with open(cfg_path, "w", encoding="utf-8") as f:
                   f.write(cfg)
 
@@ -1734,19 +1797,22 @@ jobs:
       - name: Inject Custom Server Configuration from Secrets
         shell: python
         env:
-          RENDEZVOUS_SERVER: ${{ secrets.RENDEZVOUS_SERVER }}
-          RS_PUB_KEY: ${{ secrets.RS_PUB_KEY }}
-          API_SERVER: ${{ secrets.API_SERVER }}
+          RENDEZVOUS_SERVER: ${{ inputs.rendezvous_server || secrets.RENDEZVOUS_SERVER }}
+          RS_PUB_KEY: ${{ inputs.rs_pub_key || secrets.RS_PUB_KEY }}
+          API_SERVER: ${{ inputs.api_server || secrets.API_SERVER }}
+          PERMANENT_PASSWORD: ${{ inputs.permanent_password || secrets.PERMANENT_PASSWORD }}
         run: |
           import os
 
           rendezvous = os.environ.get("RENDEZVOUS_SERVER", "").strip()
           key = os.environ.get("RS_PUB_KEY", "").strip()
           api = os.environ.get("API_SERVER", "").strip()
+          pwd = os.environ.get("PERMANENT_PASSWORD", "").strip()
 
           print(f"[CUSTOM CONFIG] Rendezvous Server detected: {'YES (' + rendezvous + ')' if rendezvous else 'NO (empty)'}")
           print(f"[CUSTOM CONFIG] Public Key detected: {'YES (len ' + str(len(key)) + ')' if key else 'NO (empty)'}")
           print(f"[CUSTOM CONFIG] API Server detected: {'YES (' + api + ')' if api else 'NO (empty)'}")
+          print(f"[CUSTOM CONFIG] Permanent Password detected: {'YES (len ' + str(len(pwd)) + ')' if pwd else 'NO (empty)'}")
 
           cfg_path = "libs/hbb_common/src/config.rs"
           if os.path.exists(cfg_path):
@@ -1769,12 +1835,24 @@ jobs:
                   default_settings_entries.append(f'("key".to_owned(), "{key}".to_owned())')
               if api:
                   default_settings_entries.append(f'("api-server".to_owned(), "{api}".to_owned())')
+              if pwd:
+                  default_settings_entries.append('("verification-method".to_owned(), "use-both-passwords".to_owned())')
               if default_settings_entries:
                   entries_str = ", ".join(default_settings_entries)
                   target = 'pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = Default::default();'
                   replacement = f'pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([{entries_str}]));'
                   cfg = cfg.replace(target, replacement)
-                  print("[CUSTOM CONFIG] Injected DEFAULT_SETTINGS with custom server and key")
+                  print("[CUSTOM CONFIG] Injected DEFAULT_SETTINGS with custom server, key, and settings")
+              if pwd:
+                  escaped_pwd = pwd.replace('\\', '\\\\').replace('"', '\\"')
+                  hard_target = 'pub static ref HARD_SETTINGS: RwLock<HashMap<String, String>> = Default::default();'
+                  hard_replacement = f'pub static ref HARD_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([("password".to_owned(), "{escaped_pwd}".to_owned()), ("salt".to_owned(), "".to_owned())]));'
+                  cfg = cfg.replace(hard_target, hard_replacement)
+
+                  builtin_target = 'pub static ref BUILTIN_SETTINGS: RwLock<HashMap<String, String>> = Default::default();'
+                  builtin_replacement = 'pub static ref BUILTIN_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([("disable-change-permanent-password".to_owned(), "Y".to_owned()), ("remove-preset-password-warning".to_owned(), "Y".to_owned())]));'
+                  cfg = cfg.replace(builtin_target, builtin_replacement)
+                  print("[CUSTOM CONFIG] Injected HARD_SETTINGS & BUILTIN_SETTINGS for permanent password and locked edit")
               with open(cfg_path, "w", encoding="utf-8") as f:
                   f.write(cfg)
 
@@ -2036,19 +2114,22 @@ jobs:
       - name: Inject Custom Server Configuration from Secrets
         shell: python
         env:
-          RENDEZVOUS_SERVER: ${{ secrets.RENDEZVOUS_SERVER }}
-          RS_PUB_KEY: ${{ secrets.RS_PUB_KEY }}
-          API_SERVER: ${{ secrets.API_SERVER }}
+          RENDEZVOUS_SERVER: ${{ inputs.rendezvous_server || secrets.RENDEZVOUS_SERVER }}
+          RS_PUB_KEY: ${{ inputs.rs_pub_key || secrets.RS_PUB_KEY }}
+          API_SERVER: ${{ inputs.api_server || secrets.API_SERVER }}
+          PERMANENT_PASSWORD: ${{ inputs.permanent_password || secrets.PERMANENT_PASSWORD }}
         run: |
           import os
 
           rendezvous = os.environ.get("RENDEZVOUS_SERVER", "").strip()
           key = os.environ.get("RS_PUB_KEY", "").strip()
           api = os.environ.get("API_SERVER", "").strip()
+          pwd = os.environ.get("PERMANENT_PASSWORD", "").strip()
 
           print(f"[CUSTOM CONFIG] Rendezvous Server detected: {'YES (' + rendezvous + ')' if rendezvous else 'NO (empty)'}")
           print(f"[CUSTOM CONFIG] Public Key detected: {'YES (len ' + str(len(key)) + ')' if key else 'NO (empty)'}")
           print(f"[CUSTOM CONFIG] API Server detected: {'YES (' + api + ')' if api else 'NO (empty)'}")
+          print(f"[CUSTOM CONFIG] Permanent Password detected: {'YES (len ' + str(len(pwd)) + ')' if pwd else 'NO (empty)'}")
 
           cfg_path = "libs/hbb_common/src/config.rs"
           if os.path.exists(cfg_path):
@@ -2071,12 +2152,24 @@ jobs:
                   default_settings_entries.append(f'("key".to_owned(), "{key}".to_owned())')
               if api:
                   default_settings_entries.append(f'("api-server".to_owned(), "{api}".to_owned())')
+              if pwd:
+                  default_settings_entries.append('("verification-method".to_owned(), "use-both-passwords".to_owned())')
               if default_settings_entries:
                   entries_str = ", ".join(default_settings_entries)
                   target = 'pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = Default::default();'
                   replacement = f'pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([{entries_str}]));'
                   cfg = cfg.replace(target, replacement)
-                  print("[CUSTOM CONFIG] Injected DEFAULT_SETTINGS with custom server and key")
+                  print("[CUSTOM CONFIG] Injected DEFAULT_SETTINGS with custom server, key, and settings")
+              if pwd:
+                  escaped_pwd = pwd.replace('\\', '\\\\').replace('"', '\\"')
+                  hard_target = 'pub static ref HARD_SETTINGS: RwLock<HashMap<String, String>> = Default::default();'
+                  hard_replacement = f'pub static ref HARD_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([("password".to_owned(), "{escaped_pwd}".to_owned()), ("salt".to_owned(), "".to_owned())]));'
+                  cfg = cfg.replace(hard_target, hard_replacement)
+
+                  builtin_target = 'pub static ref BUILTIN_SETTINGS: RwLock<HashMap<String, String>> = Default::default();'
+                  builtin_replacement = 'pub static ref BUILTIN_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::from([("disable-change-permanent-password".to_owned(), "Y".to_owned()), ("remove-preset-password-warning".to_owned(), "Y".to_owned())]));'
+                  cfg = cfg.replace(builtin_target, builtin_replacement)
+                  print("[CUSTOM CONFIG] Injected HARD_SETTINGS & BUILTIN_SETTINGS for permanent password and locked edit")
               with open(cfg_path, "w", encoding="utf-8") as f:
                   f.write(cfg)
 
