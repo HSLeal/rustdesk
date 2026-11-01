@@ -247,6 +247,10 @@ class MainActivity : FlutterActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val prefs = getSharedPreferences(KEY_SHARED_PREFERENCES, MODE_PRIVATE)
+        if (!prefs.contains(KEY_START_ON_BOOT_OPT)) {
+            prefs.edit().putBoolean(KEY_START_ON_BOOT_OPT, true).apply()
+        }
         if (_rdClipboardManager == null) {
             _rdClipboardManager = RdClipboardManager(getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
             FFI.setClipboardManager(_rdClipboardManager!!)
@@ -394,7 +398,7 @@ class MainActivity : FlutterActivity() {
                 }
                 GET_START_ON_BOOT_OPT -> {
                     val prefs = getSharedPreferences(KEY_SHARED_PREFERENCES, MODE_PRIVATE)
-                    result.success(prefs.getBoolean(KEY_START_ON_BOOT_OPT, false))
+                    result.success(prefs.getBoolean(KEY_START_ON_BOOT_OPT, true))
                 }
                 SET_START_ON_BOOT_OPT -> {
                     if (call.arguments is Boolean) {

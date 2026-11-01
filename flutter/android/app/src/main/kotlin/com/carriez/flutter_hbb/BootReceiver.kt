@@ -22,13 +22,13 @@ class BootReceiver : BroadcastReceiver() {
         if (Intent.ACTION_BOOT_COMPLETED == intent.action || DEBUG_BOOT_COMPLETED == intent.action) {
             // check SharedPreferences config
             val prefs = context.getSharedPreferences(KEY_SHARED_PREFERENCES, FlutterActivity.MODE_PRIVATE)
-            if (!prefs.getBoolean(KEY_START_ON_BOOT_OPT, false)) {
+            if (!prefs.getBoolean(KEY_START_ON_BOOT_OPT, true)) {
                 Log.d(logTag, "KEY_START_ON_BOOT_OPT is false")
                 return
             }
-            // check pre-permission
-            if (!XXPermissions.isGranted(context, REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, SYSTEM_ALERT_WINDOW)){
-                Log.d(logTag, "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS or SYSTEM_ALERT_WINDOW is not granted")
+            // check pre-permission (SYSTEM_ALERT_WINDOW is needed for overlay; battery opt may not exist on TV boxes)
+            if (!XXPermissions.isGranted(context, SYSTEM_ALERT_WINDOW)){
+                Log.d(logTag, "SYSTEM_ALERT_WINDOW is not granted")
                 return
             }
 
