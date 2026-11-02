@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Suporte Grupo Etica³</string>
+    <string name="app_name">Suporte Grupo Etica</string>
     <string name="accessibility_service_description">Permite que outros dispositivos controlem seu telefone usando toque virtual, quando o compartilhamento de tela do Suporte Grupo Etica for estabelecido</string>
     <string name="foreground_service_special_use_subtype">Mantém o serviço de suporte remoto Suporte Grupo Etica disponível para conexões autorizadas e notificações em primeiro plano.</string>
 </resources>
