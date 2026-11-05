@@ -2140,7 +2140,7 @@ jobs:
   build-rustdesk-android-universal:
     needs: [build-rustdesk-android]
     name: build rustdesk android universal apk
-    if: ${{ inputs.upload-artifact }}
+    if: inputs.upload-artifact && (inputs.build_target == 'all' || inputs.build_target == 'android' || inputs.build_target == '')
     runs-on: ubuntu-24.04
     env:
       reltype: release
@@ -2399,7 +2399,7 @@ jobs:
           BUILD_TOOLS_VERSION: ${{ env.ANDROID_SIGN_TOOL_VERSION }}
 
       - name: Upload Suporte Grupo Etica Android Universal APK
-        if: env.UPLOAD_ARTIFACT == 'true'
+        if: true
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: suporte_etica_android
