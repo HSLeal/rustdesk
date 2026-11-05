@@ -1275,6 +1275,9 @@ pub fn get_api_server(api: String, custom: String) -> String {
     {
         return res.replace(":21114", "");
     }
+    if res.contains(":21118") {
+        res = res.replace(":21118", ":21114");
+    }
     res
 }
 

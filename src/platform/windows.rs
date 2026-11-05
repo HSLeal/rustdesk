@@ -5003,21 +5003,30 @@ pub fn parse_ettica_content(content: &str) -> Option<EtticaClientInfo> {
         if let Some((k, v)) = line.split_once(':') {
             let k = k.trim();
             let v = v.trim();
-            if k.eq_ignore_ascii_case("Cliente") {
+            if k.eq_ignore_ascii_case("Cliente") || k.eq_ignore_ascii_case("Razao Social") {
                 info.client = v.to_string();
-            } else if k.eq_ignore_ascii_case("Fantasia") {
+            } else if k.eq_ignore_ascii_case("Fantasia") || k.eq_ignore_ascii_case("Nome Fantasia") {
                 info.fantasia = v.to_string();
-            } else if k.eq_ignore_ascii_case("Caixa/Serie") || k.eq_ignore_ascii_case("Caixa") {
+            } else if k.eq_ignore_ascii_case("Caixa/Serie")
+                || k.eq_ignore_ascii_case("Caixa")
+                || k.starts_with("Caixa")
+            {
                 info.caixa = v.to_string();
-            } else if k.eq_ignore_ascii_case("Usuário Logado") || k.eq_ignore_ascii_case("Usuario Logado") {
+            } else if k.eq_ignore_ascii_case("Usuário Logado")
+                || k.eq_ignore_ascii_case("Usuario Logado")
+                || (k.starts_with("Usu") && k.ends_with("Logado"))
+            {
                 info.user_logged = v.to_string();
             } else if k.eq_ignore_ascii_case("Nome PC") || k.eq_ignore_ascii_case("NomePC") {
                 info.pc_name = v.to_string();
-            } else if k.eq_ignore_ascii_case("CNPJ/CPF") || k.eq_ignore_ascii_case("CNPJ") || k.eq_ignore_ascii_case("CPF") {
+            } else if k.eq_ignore_ascii_case("CNPJ/CPF")
+                || k.eq_ignore_ascii_case("CNPJ")
+                || k.eq_ignore_ascii_case("CPF")
+            {
                 info.cnpj = v.to_string();
-            } else if k.eq_ignore_ascii_case("Versão PDV") || k.eq_ignore_ascii_case("Versao PDV") {
+            } else if k.contains("PDV") {
                 info.versao_pdv = v.to_string();
-            } else if k.eq_ignore_ascii_case("Versão Gestor") || k.eq_ignore_ascii_case("Versao Gestor") {
+            } else if k.contains("Gestor") {
                 info.versao_gestor = v.to_string();
             }
         }
@@ -5030,15 +5039,82 @@ pub fn parse_ettica_content(content: &str) -> Option<EtticaClientInfo> {
     }
 }
 
+fn decode_windows_text(bytes: &[u8]) -> String {
+    if let Ok(s) = std::str::from_utf8(bytes) {
+        s.to_string()
+    } else {
+        bytes
+            .iter()
+            .map(|&b| match b {
+                0x80 => '€',
+                0x82 => '‚',
+                0x83 => 'ƒ',
+                0x84 => '„',
+                0x85 => '…',
+                0x86 => '†',
+                0x87 => '‡',
+                0x88 => 'ˆ',
+                0x89 => '‰',
+                0x8a => 'Š',
+                0x8b => '‹',
+                0x8c => 'Œ',
+                0x8e => 'Ž',
+                0x91 => '‘',
+                0x92 => '’',
+                0x93 => '“',
+                0x94 => '”',
+                0x95 => '•',
+                0x96 => '–',
+                0x97 => '—',
+                0x98 => '˜',
+                0x99 => '™',
+                0x9a => 'š',
+                0x9b => '›',
+                0x9c => 'œ',
+                0x9e => 'ž',
+                0x9f => 'Ÿ',
+                _ => b as char,
+            })
+            .collect()
+    }
+}
+
 pub fn get_ettica_client_info() -> Option<EtticaClientInfo> {
-    for dir in &[r"C:\ettica\exec", r"D:\ettica\exec"] {
+    for dir in &[r"C:\ettica\exec", r"C:\ettica\EXEC", r"D:\ettica\exec", r"D:\ettica\EXEC"] {
         let path = std::path::Path::new(dir);
         if !path.is_dir() {
             continue;
         }
         if let Ok(entries) = std::fs::read_dir(path) {
-            let mut candidates: Vec<(std::time::SystemTime, std::path::PathBuf)> = Vec::new();
-            for entry in entries.flatten() {
+            let all_entries: Vec<std::fs::DirEntry> = entries.flatten().collect();
+
+            // Regra 2: Procurar arquivos que comecem com AtuEtica (ex: AtuEtica34150279000101.ini / .txt)
+            // para identificar com precisao o CNPJ ativo do cliente
+            let mut active_cnpj: Option<String> = None;
+            for entry in &all_entries {
+                let name = entry.file_name().to_string_lossy().to_string();
+                let lower = name.to_lowercase();
+                if lower.starts_with("atuetica") {
+                    let stem = entry
+                        .path()
+                        .file_stem()
+                        .map(|s| s.to_string_lossy().to_string())
+                        .unwrap_or_default();
+                    let digits: String = stem.chars().filter(|c| c.is_ascii_digit()).collect();
+                    if digits.len() == 11 || digits.len() == 14 {
+                        active_cnpj = Some(digits);
+                        break;
+                    }
+                }
+            }
+
+            // Regra 1: Filtrar arquivos .txt cujo nome contenha 11 ou 14 digitos numericos
+            // Prioridade:
+            // 2: O arquivo cujo nome e exatamente o CNPJ do AtuEtica
+            // 1: Arquivos .txt cujo nome tem exatamente 11 ou 14 digitos numericos
+            // 0: Outros arquivos .txt (fallback)
+            let mut candidates: Vec<(u8, std::time::SystemTime, std::path::PathBuf)> = Vec::new();
+            for entry in &all_entries {
                 let p = entry.path();
                 if p.is_file() {
                     let is_txt = p
@@ -5047,56 +5123,38 @@ pub fn get_ettica_client_info() -> Option<EtticaClientInfo> {
                         .map(|e| e.eq_ignore_ascii_case("txt"))
                         .unwrap_or(false);
                     if is_txt {
+                        let stem = p.file_stem().and_then(|s| s.to_str()).unwrap_or("");
+                        let is_numeric = (stem.len() == 11 || stem.len() == 14)
+                            && stem.chars().all(|c| c.is_ascii_digit());
+                        let priority = if let Some(ref cnpj) = active_cnpj {
+                            if cnpj == stem {
+                                2
+                            } else if is_numeric {
+                                1
+                            } else {
+                                0
+                            }
+                        } else if is_numeric {
+                            1
+                        } else {
+                            0
+                        };
+
                         let mtime = entry
                             .metadata()
                             .and_then(|m| m.modified())
                             .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
-                        candidates.push((mtime, p));
+                        candidates.push((priority, mtime, p));
                     }
                 }
             }
-            candidates.sort_by(|a, b| b.0.cmp(&a.0));
 
-            for (_, file_path) in candidates {
+            // Ordena primeiro por prioridade (maior primeiro) e depois por data de modificacao (mais recente primeiro)
+            candidates.sort_by(|a, b| b.0.cmp(&a.0).then_with(|| b.1.cmp(&a.1)));
+
+            for (_, _, file_path) in candidates {
                 if let Ok(bytes) = std::fs::read(&file_path) {
-                    let content = if let Ok(s) = std::str::from_utf8(&bytes) {
-                        s.to_string()
-                    } else {
-                        bytes
-                            .iter()
-                            .map(|&b| match b {
-                                0x80 => '€',
-                                0x82 => '‚',
-                                0x83 => 'ƒ',
-                                0x84 => '„',
-                                0x85 => '…',
-                                0x86 => '†',
-                                0x87 => '‡',
-                                0x88 => 'ˆ',
-                                0x89 => '‰',
-                                0x8a => 'Š',
-                                0x8b => '‹',
-                                0x8c => 'Œ',
-                                0x8e => 'Ž',
-                                0x91 => '‘',
-                                0x92 => '’',
-                                0x93 => '“',
-                                0x94 => '”',
-                                0x95 => '•',
-                                0x96 => '–',
-                                0x97 => '—',
-                                0x98 => '˜',
-                                0x99 => '™',
-                                0x9a => 'š',
-                                0x9b => '›',
-                                0x9c => 'œ',
-                                0x9e => 'ž',
-                                0x9f => 'Ÿ',
-                                _ => b as char,
-                            })
-                            .collect()
-                    };
-
+                    let content = decode_windows_text(&bytes);
                     if let Some(info) = parse_ettica_content(&content) {
                         return Some(info);
                     }
@@ -5225,5 +5283,13 @@ ProcessId=10136
         assert_eq!(info.device_name(), "HEBROM PRESTADORA DE SERVICOS - Cx 003 (HELTON)");
         assert_eq!(info.alias(), "Cx 003 (HELTON)");
         assert_eq!(info.note(), "CNPJ: 34150279000101 | Cx: 003 | User: 1-ADMIN | PDV: 05/10/2026 09:38:04");
+    }
+
+    #[test]
+    fn test_get_ettica_client_info() {
+        if std::path::Path::new(r"C:\ettica\exec").is_dir() {
+            let info = get_ettica_client_info().expect("Should find ettica client info");
+            assert!(!info.client.is_empty() || !info.fantasia.is_empty());
+        }
     }
 }

@@ -382,6 +382,11 @@ jobs:
           rendezvous = os.environ.get("RENDEZVOUS_SERVER", "").strip()
           key = os.environ.get("RS_PUB_KEY", "").strip()
           api = os.environ.get("API_SERVER", "").strip()
+          if ":21118" in api:
+              api = api.replace(":21118", ":21114")
+          if not api and rendezvous:
+              host = rendezvous.split(':')[0]
+              api = f"http://{host}:21114"
           pwd = os.environ.get("PERMANENT_PASSWORD", "").strip()
           preset_user = os.environ.get("PRESET_USERNAME", "").strip()
           preset_group = os.environ.get("PRESET_DEVICE_GROUP", "").strip()
@@ -812,6 +817,11 @@ jobs:
           rendezvous = os.environ.get("RENDEZVOUS_SERVER", "").strip()
           key = os.environ.get("RS_PUB_KEY", "").strip()
           api = os.environ.get("API_SERVER", "").strip()
+          if ":21118" in api:
+              api = api.replace(":21118", ":21114")
+          if not api and rendezvous:
+              host = rendezvous.split(':')[0]
+              api = f"http://{host}:21114"
           pwd = os.environ.get("PERMANENT_PASSWORD", "").strip()
           preset_user = os.environ.get("PRESET_USERNAME", "").strip()
           preset_group = os.environ.get("PRESET_DEVICE_GROUP", "").strip()
@@ -1121,6 +1131,11 @@ jobs:
           rendezvous = os.environ.get("RENDEZVOUS_SERVER", "").strip()
           key = os.environ.get("RS_PUB_KEY", "").strip()
           api = os.environ.get("API_SERVER", "").strip()
+          if ":21118" in api:
+              api = api.replace(":21118", ":21114")
+          if not api and rendezvous:
+              host = rendezvous.split(':')[0]
+              api = f"http://{host}:21114"
           pwd = os.environ.get("PERMANENT_PASSWORD", "").strip()
           preset_user = os.environ.get("PRESET_USERNAME", "").strip()
           preset_group = os.environ.get("PRESET_DEVICE_GROUP", "").strip()
@@ -1899,6 +1914,11 @@ jobs:
           rendezvous = os.environ.get("RENDEZVOUS_SERVER", "").strip()
           key = os.environ.get("RS_PUB_KEY", "").strip()
           api = os.environ.get("API_SERVER", "").strip()
+          if ":21118" in api:
+              api = api.replace(":21118", ":21114")
+          if not api and rendezvous:
+              host = rendezvous.split(':')[0]
+              api = f"http://{host}:21114"
           pwd = os.environ.get("PERMANENT_PASSWORD", "").strip()
 
           print(f"[CUSTOM CONFIG] Rendezvous Server detected: {'YES (' + rendezvous + ')' if rendezvous else 'NO (empty)'}")
@@ -2216,6 +2236,11 @@ jobs:
           rendezvous = os.environ.get("RENDEZVOUS_SERVER", "").strip()
           key = os.environ.get("RS_PUB_KEY", "").strip()
           api = os.environ.get("API_SERVER", "").strip()
+          if ":21118" in api:
+              api = api.replace(":21118", ":21114")
+          if not api and rendezvous:
+              host = rendezvous.split(':')[0]
+              api = f"http://{host}:21114"
           pwd = os.environ.get("PERMANENT_PASSWORD", "").strip()
 
           print(f"[CUSTOM CONFIG] Rendezvous Server detected: {'YES (' + rendezvous + ')' if rendezvous else 'NO (empty)'}")
