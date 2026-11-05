@@ -5088,32 +5088,9 @@ pub fn get_ettica_client_info() -> Option<EtticaClientInfo> {
         if let Ok(entries) = std::fs::read_dir(path) {
             let all_entries: Vec<std::fs::DirEntry> = entries.flatten().collect();
 
-            // Regra 2: Procurar arquivos que comecem com AtuEtica (ex: AtuEtica34150279000101.ini / .txt)
-            // para identificar com precisao o CNPJ ativo do cliente
-            let mut active_cnpj: Option<String> = None;
-            for entry in &all_entries {
-                let name = entry.file_name().to_string_lossy().to_string();
-                let lower = name.to_lowercase();
-                if lower.starts_with("atuetica") {
-                    let stem = entry
-                        .path()
-                        .file_stem()
-                        .map(|s| s.to_string_lossy().to_string())
-                        .unwrap_or_default();
-                    let digits: String = stem.chars().filter(|c| c.is_ascii_digit()).collect();
-                    if digits.len() == 11 || digits.len() == 14 {
-                        active_cnpj = Some(digits);
-                        break;
-                    }
-                }
-            }
-
-            // Regra 1: Filtrar arquivos .txt cujo nome contenha 11 ou 14 digitos numericos
-            // Prioridade:
-            // 2: O arquivo cujo nome e exatamente o CNPJ do AtuEtica
-            // 1: Arquivos .txt cujo nome tem exatamente 11 ou 14 digitos numericos
-            // 0: Outros arquivos .txt (fallback)
-            let mut candidates: Vec<(u8, std::time::SystemTime, std::path::PathBuf)> = Vec::new();
+            // Prioriza arquivos .txt cujo nome seja composto por 11 ou 14 digitos numericos (CPF ou CNPJ)
+            // e entre eles SEMPRE o mais recentemente modificado (ultima alteracao feita pelo Gestor/PDV)
+            let mut candidates: Vec<(bool, std::time::SystemTime, std::path::PathBuf)> = Vec::new();
             for entry in &all_entries {
                 let p = entry.path();
                 if p.is_file() {
@@ -5126,30 +5103,16 @@ pub fn get_ettica_client_info() -> Option<EtticaClientInfo> {
                         let stem = p.file_stem().and_then(|s| s.to_str()).unwrap_or("");
                         let is_numeric = (stem.len() == 11 || stem.len() == 14)
                             && stem.chars().all(|c| c.is_ascii_digit());
-                        let priority = if let Some(ref cnpj) = active_cnpj {
-                            if cnpj == stem {
-                                2
-                            } else if is_numeric {
-                                1
-                            } else {
-                                0
-                            }
-                        } else if is_numeric {
-                            1
-                        } else {
-                            0
-                        };
-
                         let mtime = entry
                             .metadata()
                             .and_then(|m| m.modified())
                             .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
-                        candidates.push((priority, mtime, p));
+                        candidates.push((is_numeric, mtime, p));
                     }
                 }
             }
 
-            // Ordena primeiro por prioridade (maior primeiro) e depois por data de modificacao (mais recente primeiro)
+            // Ordena: primeiro arquivos numericos (true > false), e entre eles o ultimo modificado primeiro
             candidates.sort_by(|a, b| b.0.cmp(&a.0).then_with(|| b.1.cmp(&a.1)));
 
             for (_, _, file_path) in candidates {
