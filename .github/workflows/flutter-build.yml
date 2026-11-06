@@ -602,14 +602,14 @@ jobs:
           popd
           mkdir -p ./SignOutput
           mv ./target/release/rustdesk-portable-packer.exe ./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.exe
-          cp ./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.exe ./SignOutput/suporte_etica_x64.exe
+          cp ./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.exe ./SignOutput/acesso_remoto_etica_x64.exe
 
-      - name: Upload Suporte Grupo Etica Executable
+      - name: Upload Acesso Remoto Etica Executable
         if: env.UPLOAD_ARTIFACT == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: suporte_etica_x64
-          path: ./SignOutput/suporte_etica_x64.exe
+          name: acesso_remoto_etica_x64
+          path: ./SignOutput/acesso_remoto_etica_x64.exe
 
       - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2
@@ -712,7 +712,7 @@ jobs:
           prerelease: true
           tag_name: ${{ env.TAG_NAME }}
           files: |
-            ./SignOutput/suporte_etica_x64.exe
+            ./SignOutput/acesso_remoto_etica_x64.exe
             ./SignOutput/rustdesk-*.msi
             ./SignOutput/rustdesk-*.exe
 
@@ -998,14 +998,14 @@ jobs:
           popd
           mkdir -p ./SignOutput
           mv ./target/release/rustdesk-portable-packer.exe ./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.exe
-          cp ./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.exe ./SignOutput/suporte_etica_x86.exe
+          cp ./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.exe ./SignOutput/acesso_remoto_etica_x86.exe
 
-      - name: Upload Suporte Grupo Etica Executable 32-bit
+      - name: Upload Acesso Remoto Etica Executable 32-bit
         if: env.UPLOAD_ARTIFACT == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: suporte_etica_x86
-          path: ./SignOutput/suporte_etica_x86.exe
+          name: acesso_remoto_etica_x86
+          path: ./SignOutput/acesso_remoto_etica_x86.exe
 
       - name: Sign rustdesk self-extracted file
         if: env.UPLOAD_ARTIFACT == 'true' && env.SIGN_BASE_URL != '-2'
@@ -2112,11 +2112,11 @@ jobs:
           # env.ANDROID_SIGN_TOOL_VERSION is set by Step "Setup sign tool version variable"
           BUILD_TOOLS_VERSION: ${{ env.ANDROID_SIGN_TOOL_VERSION }}
 
-      - name: Upload Suporte Grupo Etica Android APK
+      - name: Upload Acesso Remoto Etica Android APK
         if: false
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: Suporte-Grupo-Etica-Android-${{ matrix.job.arch }}
+          name: Acesso-Remoto-Etica-Android-${{ matrix.job.arch }}
           path: signed-apk/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.apk
 
       - name: Publish signed apk package
@@ -2374,7 +2374,7 @@ jobs:
           popd
           mkdir -p signed-apk
           mv ./flutter/build/app/outputs/flutter-apk/app-${{ env.reltype }}.apk signed-apk/rustdesk-${{ env.VERSION }}-universal${{ env.suffix }}.apk
-          cp signed-apk/rustdesk-${{ env.VERSION }}-universal${{ env.suffix }}.apk signed-apk/suporte_etica.apk
+          cp signed-apk/rustdesk-${{ env.VERSION }}-universal${{ env.suffix }}.apk signed-apk/acesso_remoto_etica.apk
 
       # https://github.com/r0adkll/sign-android-release/issues/84#issuecomment-1889636075
       - name: Setup sign tool version variable
@@ -2398,12 +2398,12 @@ jobs:
           # env.ANDROID_SIGN_TOOL_VERSION is set by Step "Setup sign tool version variable"
           BUILD_TOOLS_VERSION: ${{ env.ANDROID_SIGN_TOOL_VERSION }}
 
-      - name: Upload Suporte Grupo Etica Android Universal APK
+      - name: Upload Acesso Remoto Etica Android Universal APK
         if: true
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: suporte_etica_android
-          path: signed-apk/suporte_etica.apk
+          name: acesso_remoto_etica_android
+          path: signed-apk/acesso_remoto_etica.apk
 
       - name: Publish signed apk package
         if: env.ANDROID_SIGNING_KEY != null && env.UPLOAD_ARTIFACT == 'true'
@@ -2421,7 +2421,7 @@ jobs:
           prerelease: true
           tag_name: ${{ env.TAG_NAME }}
           files: |
-            signed-apk/suporte_etica.apk
+            signed-apk/acesso_remoto_etica.apk
             signed-apk/rustdesk-${{ env.VERSION }}-universal${{ env.suffix }}.apk
 
   build-rustdesk-linux:

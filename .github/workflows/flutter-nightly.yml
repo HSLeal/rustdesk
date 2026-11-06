@@ -1,4 +1,4 @@
-name: Compilar Suporte Grupo Etica
+name: Compilar Acesso Remoto Etica
 
 on:
   workflow_dispatch:

@@ -3021,7 +3021,7 @@ int versionCmp(String v1, String v2) {
 }
 
 String getWindowName({WindowType? overrideType}) {
-  const name = "Suporte Grupo Etica³";
+  const name = "Acesso Remoto Etica";
   switch (overrideType ?? kWindowType) {
     case WindowType.Main:
       return name;
