@@ -4905,45 +4905,52 @@ impl EtticaClientInfo {
     }
 
     pub fn device_name(&self) -> String {
+        let mut parts = Vec::new();
+
+        let fantasia_clean = clean_company_name(&self.fantasia);
+        let client_clean = clean_company_name(&self.client);
+
+        if !fantasia_clean.is_empty() {
+            parts.push(fantasia_clean.to_string());
+        }
+
+        if !client_clean.is_empty() && !client_clean.eq_ignore_ascii_case(fantasia_clean) {
+            parts.push(client_clean.to_string());
+        }
+
         let pc = if !self.pc_name.is_empty() {
-            &self.pc_name
+            self.pc_name.as_str()
         } else {
             ""
         };
-        let company = if !self.fantasia.is_empty() {
-            &self.fantasia
-        } else {
-            &self.client
-        };
-        let mut prefix = company.as_str();
-        let upper = prefix.to_uppercase();
-        for suff in &[" EIRELI", " LTDA", " ME", " EPP", " S/A", " SA", " S.A."] {
-            if upper.ends_with(suff) {
-                prefix = &prefix[..prefix.len() - suff.len()];
-                break;
-            }
-        }
-        let prefix = prefix.trim();
-
-        if !self.caixa.is_empty() && self.caixa != "000" && self.caixa != "0" {
+        let machine_part = if !self.caixa.is_empty() && self.caixa != "000" && self.caixa != "0" {
             if !pc.is_empty() {
-                format!("{prefix} - Cx {} ({pc})", self.caixa)
+                format!("Cx {} ({pc})", self.caixa)
             } else {
-                format!("{prefix} - Cx {}", self.caixa)
+                format!("Cx {}", self.caixa)
             }
         } else if !self.versao_gestor.is_empty() && self.versao_pdv.is_empty() {
             if !pc.is_empty() {
-                format!("{prefix} - Servidor ({pc})")
+                format!("Servidor ({pc})")
             } else {
-                format!("{prefix} - Servidor")
+                "Servidor".to_string()
             }
+        } else if !pc.is_empty() {
+            pc.to_string()
         } else {
-            if !pc.is_empty() {
-                format!("{prefix} - {pc}")
-            } else {
-                prefix.to_string()
-            }
+            "".to_string()
+        };
+
+        if !machine_part.is_empty() {
+            parts.push(machine_part);
         }
+
+        let formatted_cnpj = format_cnpj_or_cpf(&self.cnpj);
+        if !formatted_cnpj.is_empty() {
+            parts.push(formatted_cnpj);
+        }
+
+        parts.join(" | ")
     }
 
     pub fn alias(&self) -> String {
@@ -4986,6 +4993,44 @@ impl EtticaClientInfo {
             parts.push(format!("Gestor: {}", self.versao_gestor));
         }
         parts.join(" | ")
+    }
+}
+
+fn clean_company_name(s: &str) -> &str {
+    let mut prefix = s.trim();
+    let upper = prefix.to_uppercase();
+    for suff in &[" EIRELI", " LTDA", " ME", " EPP", " S/A", " SA", " S.A."] {
+        if upper.ends_with(suff) {
+            prefix = &prefix[..prefix.len() - suff.len()];
+            break;
+        }
+    }
+    prefix.trim()
+}
+
+fn format_cnpj_or_cpf(s: &str) -> String {
+    let digits: String = s.chars().filter(|c| c.is_ascii_digit()).collect();
+    if digits.len() == 14 {
+        format!(
+            "{}.{}.{}/{}-{}",
+            &digits[0..2],
+            &digits[2..5],
+            &digits[5..8],
+            &digits[8..12],
+            &digits[12..14]
+        )
+    } else if digits.len() == 11 {
+        format!(
+            "{}.{}.{}-{}",
+            &digits[0..3],
+            &digits[3..6],
+            &digits[6..9],
+            &digits[9..11]
+        )
+    } else if !s.trim().is_empty() {
+        s.trim().to_string()
+    } else {
+        "".to_string()
     }
 }
 
@@ -5115,10 +5160,15 @@ pub fn get_ettica_client_info() -> Option<EtticaClientInfo> {
             // Ordena: primeiro arquivos numericos (true > false), e entre eles o ultimo modificado primeiro
             candidates.sort_by(|a, b| b.0.cmp(&a.0).then_with(|| b.1.cmp(&a.1)));
 
-            for (_, _, file_path) in candidates {
+            for (is_numeric, _, file_path) in candidates {
                 if let Ok(bytes) = std::fs::read(&file_path) {
                     let content = decode_windows_text(&bytes);
-                    if let Some(info) = parse_ettica_content(&content) {
+                    if let Some(mut info) = parse_ettica_content(&content) {
+                        if info.cnpj.is_empty() && is_numeric {
+                            if let Some(stem) = file_path.file_stem().and_then(|s| s.to_str()) {
+                                info.cnpj = stem.to_string();
+                            }
+                        }
                         return Some(info);
                     }
                 }
@@ -5243,7 +5293,7 @@ ProcessId=10136
             Vers\u{00e3}o PDV: 05/10/2026 09:38:04";
         let info = parse_ettica_content(sample).unwrap();
         assert_eq!(info.group_name(), "HEBROM PRESTADORA DE SERVICOS EIRELI");
-        assert_eq!(info.device_name(), "HEBROM PRESTADORA DE SERVICOS - Cx 003 (HELTON)");
+        assert_eq!(info.device_name(), "HEBROM PRESTADORA DE SERVICOS | Cx 003 (HELTON) | 34.150.279/0001-01");
         assert_eq!(info.alias(), "Cx 003 (HELTON)");
         assert_eq!(info.note(), "CNPJ: 34150279000101 | Cx: 003 | User: 1-ADMIN | PDV: 05/10/2026 09:38:04");
     }
