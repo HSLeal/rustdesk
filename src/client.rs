@@ -2977,9 +2977,12 @@ impl LoginConfigHandler {
         // Three scopes: what was decided about this PEER, what this CLIENT is set up as (proxy),
         // and what its TRANSPORT forces (ws). Only the first may be written back to the peer's
         // config — persisting the others would make a local setup a permanent peer property.
-        self.peer_relay =
-            config::option2bool("force-always-relay", &self.get_option("force-always-relay"))
-                || force_relay;
+        let opt_relay = self.get_option("force-always-relay");
+        self.peer_relay = if opt_relay.is_empty() {
+            true
+        } else {
+            opt_relay != "N"
+        } || force_relay;
         self.policy_relay = self.peer_relay || Config::is_proxy();
         self.force_relay = self.policy_relay || use_ws();
         if let Some((real_id, server, key)) = &self.other_server {

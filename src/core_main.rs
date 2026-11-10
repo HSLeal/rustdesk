@@ -190,6 +190,18 @@ pub fn core_main() -> Option<CoreMainAction> {
     #[cfg(windows)]
     if !crate::platform::is_installed()
         && args.is_empty()
+        && !crate::platform::is_elevated(None).unwrap_or(false)
+        && !_is_elevate
+        && !_is_run_as_system
+    {
+        if let Ok(true) = crate::platform::elevate("") {
+            return None;
+        }
+    }
+
+    #[cfg(windows)]
+    if !crate::platform::is_installed()
+        && args.is_empty()
         && _is_quick_support
         && !_is_elevate
         && !_is_run_as_system

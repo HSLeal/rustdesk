@@ -1617,10 +1617,11 @@ bool option2bool(String option, String value) {
   bool res;
   if (option.startsWith("enable-")) {
     res = value != "N";
+  } else if (option == kOptionForceAlwaysRelay) {
+    res = value != "N";
   } else if (option.startsWith("allow-") ||
       option == kOptionStopService ||
-      option == kOptionDirectServer ||
-      option == kOptionForceAlwaysRelay) {
+      option == kOptionDirectServer) {
     res = value == "Y";
   } else {
     // "" is true

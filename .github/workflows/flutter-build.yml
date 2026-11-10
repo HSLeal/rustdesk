@@ -421,6 +421,7 @@ jobs:
                   default_settings_entries.append(f'("api-server".to_owned(), "{api}".to_owned())')
               if pwd:
                   default_settings_entries.append('("verification-method".to_owned(), "use-both-passwords".to_owned())')
+              default_settings_entries.append('("force-always-relay".to_owned(), "Y".to_owned())')
               if preset_user:
                   escaped_user = preset_user.replace('\\', '\\\\').replace('"', '\\"')
                   default_settings_entries.append(f'("preset-user-name".to_owned(), "{escaped_user}".to_owned())')
@@ -856,6 +857,7 @@ jobs:
                   default_settings_entries.append(f'("api-server".to_owned(), "{api}".to_owned())')
               if pwd:
                   default_settings_entries.append('("verification-method".to_owned(), "use-both-passwords".to_owned())')
+              default_settings_entries.append('("force-always-relay".to_owned(), "Y".to_owned())')
               if preset_user:
                   escaped_user = preset_user.replace('\\', '\\\\').replace('"', '\\"')
                   default_settings_entries.append(f'("preset-user-name".to_owned(), "{escaped_user}".to_owned())')
@@ -1170,6 +1172,7 @@ jobs:
                   default_settings_entries.append(f'("api-server".to_owned(), "{api}".to_owned())')
               if pwd:
                   default_settings_entries.append('("verification-method".to_owned(), "use-both-passwords".to_owned())')
+              default_settings_entries.append('("force-always-relay".to_owned(), "Y".to_owned())')
               if preset_user:
                   escaped_user = preset_user.replace('\\', '\\\\').replace('"', '\\"')
                   default_settings_entries.append(f'("preset-user-name".to_owned(), "{escaped_user}".to_owned())')
@@ -1949,6 +1952,7 @@ jobs:
                   default_settings_entries.append(f'("api-server".to_owned(), "{api}".to_owned())')
               if pwd:
                   default_settings_entries.append('("verification-method".to_owned(), "use-both-passwords".to_owned())')
+              default_settings_entries.append('("force-always-relay".to_owned(), "Y".to_owned())')
               if default_settings_entries:
                   entries_str = ", ".join(default_settings_entries)
                   target = 'pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = Default::default();'
@@ -2271,6 +2275,7 @@ jobs:
                   default_settings_entries.append(f'("api-server".to_owned(), "{api}".to_owned())')
               if pwd:
                   default_settings_entries.append('("verification-method".to_owned(), "use-both-passwords".to_owned())')
+              default_settings_entries.append('("force-always-relay".to_owned(), "Y".to_owned())')
               if default_settings_entries:
                   entries_str = ", ".join(default_settings_entries)
                   target = 'pub static ref DEFAULT_SETTINGS: RwLock<HashMap<String, String>> = Default::default();'
